@@ -6,44 +6,40 @@ using ..Ops
 using ..Grids
 using ..Model: MODE, nᵤ
 
-function unpack_hu!(hux, huy, Uvec, n₁, n₂, i, j)
+function unpack_hu!(hux, huy, Uvec, n₁, n₂, i, j)#function for reducing the dimension of matirx from Uvec
     hux[i, j] = Uvec[gridded_to_flat(2, i, j; nᵤ, n₁, n₂)]
     huy[i, j] = Uvec[gridded_to_flat(3, i, j; nᵤ, n₁, n₂)]
     return
 end
 
+
 function unpack_hu!(hux, huy, Uvec, n₁, n₂; executor=ThreadedEx())
     @floop executor for I in CartesianIndices((n₁, n₂))
-        unpack_hu!(hux, huy, Uvec, n₁, n₂, Tuple(I)...)
+        unpack_hu!(hux, huy, Uvec, n₁, n₂, Tuple(I)...) #finding hux and huy
     end
     return hux, huy
 end
 
 function compute_skew_cap_coeffs!(
-    fx1, fx2, fx3, fy1, fy2, fy3, gx, gy, gv, fvx, fvy,
+    fxx, fxy, fyy, gx, gy, gv, fvx, fvy, Pid,
     h, vx, vy, κ, θₐ, θᵣ, hₛ,
     hux, huy, ux, uy, τx, τy,
     Δx, Δy, n₁, n₂, i, j
 )
-#=    @static if MODE == :full
-        fx1[i, j] = 0.0
-        fx2[i, j] = 0.0
-        fx3[i, j] = 0.0
-        fy1[i, j] = 0.0
-        fy2[i, j] = 0.0
-        fy3[i, j] = 0.0
-        gx[i, j] = 0.0
-        gy[i, j] = 0.0
-        fxx[i, j] = fyy[i, j] = 0.0
-        fxy[i, j] = 0.0
+    @static if MODE == :full #definition of f1 tensors(f=fxx,fxy,fyy) and f2 vector: g=(gx,gy) 
+        fxx[i, j] = √κ * √h[i, j] * 1 / √(1 + h[i, j] / 4κ * (vx[i, j]^2 + vy[i, j]^2)) * (1 - 1 / (1 + h[i, j] / 2κ * (vx[i, j]^2 + vy[i, j]^2)) * h[i, j] / 4κ * (vx[i, j]^2))
+        fxy[i, j] = √κ * √h[i, j] * 1 / √(1 + h[i, j] * 1 / 4κ * (vx[i, j]^2 + vy[i, j]^2)) * (-1 / (1 + h[i, j] / 2κ * (vx[i, j]^2 + vy[i, j]^2)) * h[i, j] / 4κ * (vx[i, j] * vy[i, j]))
+        fyy[i, j] = √κ * √h[i, j] * 1 / √(1 + h[i, j] * 1 / 4κ * (vx[i, j]^2 + vy[i, j]^2)) * (1 - 1 / (1 + h[i, j] / 2κ * (vx[i, j]^2 + vy[i, j]^2)) * h[i, j] / 4κ * (vy[i, j]^2))
+        gx[i, j] = h[i, j] * vx[i, j] / 2 * (1 + h[i, j] / 2κ * (vx[i, j]^2 + vy[i, j]^2))^(-1)
+        gy[i, j] = h[i, j] * vy[i, j] / 2 * (1 + h[i, j] / 2κ * (vx[i, j]^2 + vy[i, j]^2))^(-1)
     elseif MODE == :simple
         fxx[i, j] = fyy[i, j] = √κ * √h[i, j]
         fxy[i, j] = 0.0
         gx[i, j] = h[i, j] * vx[i, j] / 2
         gy[i, j] = h[i, j] * vy[i, j] / 2
     else
-#       # fxx[i, j] = fyy[i, j] = 0.0
-#        fxy[i, j] = 0.0
+        fxx[i, j] = fyy[i, j] = 0.0
+        fxy[i, j] = 0.0
         gx[i, j] = 0.0
         gy[i, j] = 0.0
     end
@@ -51,36 +47,35 @@ function compute_skew_cap_coeffs!(
     g = @SVector [gx[i, j], gy[i, j]]
     f = @SMatrix(
         [
-            fx1[i, j] fx2[i, j] fx3[i, j]
-            fy1[i, j] fy2[i, j] fy3[i, j]
+            fxx[i, j] fxy[i, j]
+            fxy[i, j] fyy[i, j]
         ]
     )
     u = @SVector [ux[i, j], uy[i, j]]
-    τ = 0.0
+    τ = @SVector [τx, τy]
+    gv[i, j] = g' * v #f2.W scalar
+    fv = f * v #f1.W vector
 
-    gv[i, j] = g' * v
-    fv = f * v
-
-#    dej = (hₛ / h[i, j])^4 - (hₛ / h[i, j])^3
-#    ε = 1.e-3
-    θₛ = 0.0
+    dej = (hₛ / h[i, j])^4 - (hₛ / h[i, j])^3# for n=4,m=3
+    ε = 1.e-3
+    θₛ = 0.5 * (θₐ + θᵣ) + 0.5 * (θᵣ - θₐ) * tanh((@div(hux, huy)) / ε) #Calculation of angle
 
     fvx[i, j] = fv[1]
-    fvy[i, j] = fv[2]=#
-    
+    fvy[i, j] = fv[2]
+    Pid[i, j] = (6 / hₛ) * κ * (1 - cos(θₛ)) * dej# for n=4,m=3
     return
 end
 
 function compute_skew_cap_coeffs!(
-    fx1, fx2, fx3, fy1, fy2, fy3, gx, gy, gv, fvx, fvy,
+    fxx, fxy, fyy, gx, gy, gv, fvx, fvy, Pid,
     h, vx, vy, κ, θₐ, θᵣ, hₛ,
     hux, huy, ux, uy, τx, τy,
     Δx, Δy, n₁, n₂; executor=ThreadedEx()
 )
-    @floop executor for I in CartesianIndices(h)
+    @floop executor for I in CartesianIndices(h)# Evaluates PId, f1.W and f2.W for each grids
         i, j = Tuple(I)
         compute_skew_cap_coeffs!(
-            fx1, fx2, fx3, fy1, fy2, fy3, gx, gy, gv, fvx, fvy,
+            fxx, fxy, fyy, gx, gy, gv, fvx, fvy, Pid,
             h, vx, vy, κ, θₐ, θᵣ, hₛ,
             hux, huy, ux, uy, τx, τy,
             Δx, Δy, n₁, n₂, i, j
@@ -88,56 +83,72 @@ function compute_skew_cap_coeffs!(
     end
 end
 
+
+
 function skew_cap_kernel!(
-    dU, h, ux, uy, vx, vy, ϕx1, ϕx2, ϕx1, ϕy1, ϕy2, ϕy3,
-    gx, gy, fx1, fx2, fx3, fy1, fy2, fy3, gv, fvx, fvy,
+    dU, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
+    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid,
     Re, β, τx, τy,
     Δx, Δy, n₁, n₂, i, j
 )
 
-#=    g = @SVector [gx[i, j], gy[i, j]]
-    f = @SMatrix [fx1[i, j] fx2[i, j] fx3[i, j]
-        fy1[i, j] fy2[i, j] fy2[i, j]]
-    ϕ = @SMatrix [ϕx1[i, j] ϕx2[i, j] ϕx3[i, j]
-        ϕy1[i, j] ϕy2[i, j]  ϕy3[i, j]]
-    u = @SVector [ux[i, j], uy[i, j]]
-    v = @SVector [vx[i, j], vy[i, j]]
-    τ = @SVector [τx, τy]
+    g = @SVector [gx[i, j], gy[i, j]]# Vector for f2
+    f = @SMatrix [fxx[i, j] fxy[i, j]
+        fxy[i, j] fyy[i, j]]         # Matrix for f1
+    ϕ = @SMatrix [ϕxx[i, j] ϕxy[i, j]# Matrix for ϕ
+        ϕxy[i, j] ϕyy[i, j]]
+    ϕ1 = @SVector [ϕx[i, j], ϕy[i, j]]# Vector for ψ   
+    u = @SVector [ux[i, j], uy[i, j]]# Vector for u
+    v = @SVector [vx[i, j], vy[i, j]]# Vector for W
+    τ = @SVector [τx, τy]            # Vector for τe
+    gradh = @∇(h)
+    dh= @SVector [(@dx(h)), (@dy(h))]# gradient of h
 
-    dhu = @SVector [0, 0]
-    dhv = @SVector [0, 0]
-#    dhv = 0.0
-    dhϕ =  [
-        0 0 0
-        0 0 0 
-    ]=#
+    
+    dhu = -(@∇(gv)) + (@divh∇(fvx, fvy)) + 3 / Re * (τ / 2 - u / h[i, j]) + h[i, j] * (@∇(Pid))# momentum balance
+    dhv = @SVector [vx[i, j], vy[i, j]]
+    dhv = -g * (@div(ux, uy)) - f * (@divh∇(ux, uy))
+ #   dhϕ1 = (((u[1]*dh[1]+u[2]*dh[2])+h[i, j]*@div(ux,uy))ϕ1 + ((ϕ1[1]*dh[1]+ϕ1[2]*dh[2])+h[i, j]*@div(ϕx,ϕy)) * u + (1/7)*((h[i, j])^2) * (@div(ϕx, ϕy)) * ϕ1 
+ #   + (2/7)*((h[i, j])^2)*(@∇(ϕx, ϕy))*ϕ1 + (5)*u-15*ϕ1+ (5)*h[i, j]*ϕ1
+ #   - (u[1]*dh[1]+u[2]*dh[2])*ϕ1+(4/7)*(h[i, j])*(ϕ1[1]*dh[1]+ϕ1[2]*dh[2])*ϕ1)# Equation for ψ1
+    dhϕ1 = ((u'*@∇(h) + h[i, j]*@div(ux,uy))ϕ1 + ((ϕ1'*@∇(h))+h[i, j]*@div(ϕx,ϕy)) * u + (1. /7.)*((h[i, j])^2) * (@div(ϕx, ϕy)) * ϕ1 
+    + (2. /7.)*((h[i, j])^2)*(@∇(ϕx, ϕy))*ϕ1 + (5)*u-15*ϕ1+ (5)*h[i, j]*ϕ1
+    - (u'*@∇(h))*ϕ1+(4. /7.)*(h[i, j])*(ϕ1'*@∇(h))*ϕ1)# Equation for ψ1
+  
 
-    dU[gridded_to_flat(1, i, j; nᵤ, n₁, n₂)] = 0.0
-    dU[gridded_to_flat(2, i, j; nᵤ, n₁, n₂)] = 0.0
-    dU[gridded_to_flat(3, i, j; nᵤ, n₁, n₂)] = 0.0
-    dU[gridded_to_flat(4, i, j; nᵤ, n₁, n₂)] = 0.0
-    dU[gridded_to_flat(5, i, j; nᵤ, n₁, n₂)] = 0.0
-    dU[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] = 0.0
-    dU[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] = 0.0
-    dU[gridded_to_flat(8, i, j; nᵤ, n₁, n₂)] = 0.0
-    dU[gridded_to_flat(9, i, j; nᵤ, n₁, n₂)] = 0.0
-    dU[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] = 0.0
-    dU[gridded_to_flat(11, i, j; nᵤ, n₁, n₂)] = 0.0
+    dhϕ = (
+        2h[i, j] * (@div(ux, uy)) * ϕ - @∇(ux, uy) * ϕ * h[i, j] - h[i, j] * ϕ * @∇(ux, uy)'
+        -
+        β / Re / h[i, j] * (
+            ϕ - (u ⊗ u) / (3h[i, j]^2) + 1 / (12h[i, j]^2) * ((u ⊗ u) - h[i, j]^2 / 4 * (τ ⊗ τ)) )
+    ) # enstrophy equation
+    # dU represents the non-conservative part of the equations
+    dU[gridded_to_flat(1, i, j; nᵤ, n₁, n₂)] = 0.0 
+    dU[gridded_to_flat(2, i, j; nᵤ, n₁, n₂)] = dhu[1]
+    dU[gridded_to_flat(3, i, j; nᵤ, n₁, n₂)] = dhu[2]
+    dU[gridded_to_flat(4, i, j; nᵤ, n₁, n₂)] = dhv[1]
+    dU[gridded_to_flat(5, i, j; nᵤ, n₁, n₂)] = dhv[2]
+    dU[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] = dhϕ[1, 1]
+    dU[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] = dhϕ[1, 2]
+    dU[gridded_to_flat(8, i, j; nᵤ, n₁, n₂)] = dhϕ[2, 2]
+    dU[gridded_to_flat(9, i, j; nᵤ, n₁, n₂)] = dhϕ1[1]
+    dU[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] = dhϕ1[2]
 
     return
 end
 
+
 function skew_cap_kernel!(
-    dU, h, ux, uy, vx, vy, ϕx1, ϕx2, ϕx1, ϕy1, ϕy2, ϕy3,
-    gx, gy, fx1, fx2, fx3, fy1, fy2, fy3, gv, fvx, fvy,
+    dU, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
+    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid,
     Re, β, τx, τy,
     Δx, Δy, n₁, n₂; executor=ThreadedEx(),
 )
-    @floop executor for I in CartesianIndices(h)
+    @floop executor for I in CartesianIndices(h)# Evaluates the non-conservative terms for each grids
         i, j = Tuple(I)
         skew_cap_kernel!(
-            dU, h, ux, uy, vx, vy, ϕx1, ϕx2, ϕx1, ϕy1, ϕy2, ϕy3,
-            gx, gy, fx1, fx2, fx3, fy1, fy2, fy3, gv, fvx, fvy,
+            dU, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
+            gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid,
             Re, β, τx, τy,
             Δx, Δy, n₁, n₂, i, j
         )
@@ -147,33 +158,33 @@ end
 function update_cap!(dUvec, Uvec, p, t; gridinfo, caches, executor=:auto)
     typed_caches = caches[typeof(Uvec)]
     cache_cap = typed_caches.cap
-    @unpack h, hux, huy, ux, uy, vx, vy, ϕx1, ϕx2, ϕx1, ϕy1, ϕy2, ϕy3 = cache_cap
-    @unpack fx1, fx2, fx3, fy1, fy2, fy3, gv, fvx, fvy, gx, gy = cache_cap
-    @unpack Δx, Δy, n₁, n₂ = gridinfo
-    @unpack κ, Re, β, τx, τy, θₐ, θᵣ, hₛ = p
+    @unpack h, hux, huy, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy = cache_cap #storing temporary variables?
+    @unpack fxx, fxy, fyy, gv, fvx, fvy, gx, gy, Pid = cache_cap
+    @unpack Δx, Δy, n₁, n₂ = gridinfo # imports the grid size and its number
+    @unpack κ, Re, β, τx, τy, θₐ, θᵣ, hₛ = p # imports the inputs of the problem
 
     if executor == :auto
         executor = Uvec isa CuArray ? CUDAEx() : ThreadedEx()
     end
 
-    unpack_Uvec!(h, ux, uy, vx, vy, ϕx1, ϕx2, ϕx1, ϕy1, ϕy2, ϕy3, Uvec, n₁, n₂; executor)
-    unpack_hu!(hux, huy, Uvec, n₁, n₂; executor)
+    unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, Uvec, n₁, n₂; executor)# Removing h from each variable
+    unpack_hu!(hux, huy, Uvec, n₁, n₂; executor)# For obtaining the values of hux and huy
 
-    compute_skew_cap_coeffs!(
-        fx1, fx2, fx3, fy1, fy2, fy3, gx, gy, gv, fvx, fvy, h,
+    compute_skew_cap_coeffs!(# Evaluates PId, f1.W and f2.W for each grids
+        fxx, fxy, fyy, gx, gy, gv, fvx, fvy, Pid, h,
         vx, vy, κ, θₐ, θᵣ, hₛ, hux, huy, ux, uy, τx, τy,
         Δx, Δy, n₁, n₂;
         executor
     )
 
-    skew_cap_kernel!(
-        dUvec, h, ux, uy, vx, vy, ϕx1, ϕx2, ϕx1, ϕy1, ϕy2, ϕy3,
-        gx, gy, fx1, fx2, fx3, fy1, fy2, fy3, gv, fvx, fvy, 
+    skew_cap_kernel!(# Evaluates the non-conservative terms
+        dUvec, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
+        gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid,
         Re, β, τx, τy,
         Δx, Δy, n₁, n₂;
         executor
     )
 
-    return dUvec
+    return dUvec #returns the non-conservative terms
 end
 end
