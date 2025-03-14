@@ -56,7 +56,7 @@ end
 # %%
 parameters = Dict(
     :hdrop_std => 0.2,
-    :tmax => 400,
+    :tmax => 1,
     :hₛ_ratio => 1.0,
     :hₛ => 5e-2,
     :ndrops => 1,
@@ -64,7 +64,7 @@ parameters = Dict(
     :μ => 0.001,
     :σ => 0.075,
     :θₛ => 30,
-    :dθₛ => [0, 1, 2, 3, 4, 5, 7, 8, 9],
+    :dθₛ => [0],
     :save_timestep => 0.5,
     :θτ => 0.0,
     :mass => 220,

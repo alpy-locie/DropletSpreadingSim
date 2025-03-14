@@ -43,11 +43,11 @@ struct DropletSpreadingExperiment
 end
 
 show(io::IO, exp::DropletSpreadingExperiment) =
-    print(io, "DropletSpreadingExperiment($(exp.p), $(exp.grid))")
+    print(io, "DropletSpreadingExperiment($(exp.p), $(exp.grid))")# printing the parameters and grids
 
-function unpack_fields_flat(U, exp::DropletSpreadingExperiment; raw=false)
+function unpack_fields_flat(U, exp::DropletSpreadingExperiment; raw=false) #asigning values for the variables?
     @unpack n₁, n₂ = exp.grid
-    h, hux, huy, hvx, hvy, hϕxx, hϕxy, hϕyy = eachslice(reshape(U, 8, n₁, n₂); dims=1)
+    h, hux, huy, hvx, hvy,  hϕx, hϕy, hϕxx, hϕxy, hϕyy = eachslice(reshape(U, 10, n₁, n₂); dims=1)
     if raw
         return (
             h=h,
@@ -58,23 +58,26 @@ function unpack_fields_flat(U, exp::DropletSpreadingExperiment; raw=false)
             ϕxx=hϕxx,
             ϕxy=hϕxy,
             ϕyy=hϕyy,
+            ϕx=hϕx,
+            ϕy=hϕy,
         )
     end
-    ux, uy, vx, vy, ϕxx, ϕxy, ϕyy =
-        [hux, huy, hvx, hvy, hϕxx, hϕxy, hϕyy] .|> ((var) -> var ./ h)
-    return (h=h, ux=ux, uy=uy, vx=vx, vy=vy, ϕxx=ϕxx, ϕxy=ϕxy, ϕyy=ϕyy)
+    ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy =
+        [hux, huy, hvx, hvy,  hϕx, hϕy, hϕxx, hϕxy, hϕyy] .|> ((var) -> var ./ h)
+    return (h=h, ux=ux, uy=uy, vx=vx, vy=vy,  ϕx=ϕx, ϕy=ϕy, ϕxx=ϕxx, ϕxy=ϕxy, ϕyy=ϕyy)
 end
 
-function unpack_fields_vect(U, exp::DropletSpreadingExperiment; raw=false)
+function unpack_fields_vect(U, exp::DropletSpreadingExperiment; raw=false)#Creating vectors
     @unpack n₁, n₂ = exp.grid
-    @unpack h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy = unpack_fields_flat(U, exp; raw)
+    @unpack h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy = unpack_fields_flat(U, exp; raw)
     u = [@SVector([ux[i, j], uy[i, j]]) for i = 1:n₁, j = 1:n₂]
     v = [@SVector([vx[i, j], vy[i, j]]) for i = 1:n₁, j = 1:n₂]
+    ϕ1= [@SVector([ϕx[i, j], ϕy[i, j]]) for i = 1:n₁, j = 1:n₂]
     ϕ = [@SMatrix([ϕxx[i, j] ϕxy[i, j]; ϕxy[i, j] ϕyy[i, j]]) for i = 1:n₁, j = 1:n₂]
-    return (h=h, u=u, v=v, ϕ=ϕ)
+    return (h=h, u=u, v=v, ϕ1=ϕ1, ϕ=ϕ)
 end
 
-function unpack_fields(U, exp::DropletSpreadingExperiment; vect=false, raw=false)
+function unpack_fields(U, exp::DropletSpreadingExperiment; vect=false, raw=false)# returning the variables in non-vector form?
     if vect
         return unpack_fields_vect(U, exp; raw)
     else
@@ -110,7 +113,7 @@ function build_save_callback(
         x_[:] = x |> collect
         y_[:] = y |> collect
 
-        for var in ["h", "ux", "uy", "vx", "vy", "ϕxx", "ϕxy", "ϕyy"]
+        for var in ["h", "ux", "uy", "vx", "vy", "ϕx", "ϕy", "ϕxx", "ϕxy", "ϕyy"]
             defVar(ds, var, Float64, ("t", "x", "y"))
         end
     end
@@ -139,17 +142,17 @@ function build_reprojection_callback(
             executor = Uvec isa CuArray ? CUDAEx() : ThreadedEx()
         end
         @unpack n₁, n₂, Δx, Δy = exp.grid
-        @unpack h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy = exp.caches[typeof(Uvec)].cap
+        @unpack h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy = exp.caches[typeof(Uvec)].cap
         vx_new = copy(vx)
         vy_new = copy(vy)
         @unpack κ = exp.p
-        unpack_Uvec!(h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, Uvec, n₁, n₂; executor)
+        unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, Uvec, n₁, n₂; executor)
         compute_v!(vx_new, vy_new, h, κ, Δx, Δy, n₁, n₂; executor)
         if isnothing(thresh) || (
             (norm(vx - vx_new) / norm(vx) > thresh) ||
             (norm(vy - vy_new) / norm(vy) > thresh)
         )
-            pack_Uvec!(integrator.u, h, ux, uy, vx_new, vy_new, ϕxx, ϕxy, ϕyy, n₁, n₂; executor)
+            pack_Uvec!(integrator.u, h, ux, uy, vx_new, vy_new, ϕx, ϕy, ϕxx, ϕxy, ϕyy, n₁, n₂; executor)
             return
         end
     end
@@ -226,18 +229,16 @@ function init_model(x, y, h, p)
     uy = @. h * τy / 2
     vx = zeros(n₁, n₂)
     vy = zeros(n₁, n₂)
-    ϕx1 = zeros(n₁, n₂)
-    ϕx2 = zeros(n₁, n₂)
-    ϕx3 = zeros(n₁, n₂)
-    ϕy1 = zeros(n₁, n₂)
-    ϕy2 = zeros(n₁, n₂)
-    ϕy3 = zeros(n₁, n₂)
+    ϕxx = zeros(n₁, n₂)
+    ϕxy = zeros(n₁, n₂)
+    ϕyy = zeros(n₁, n₂)
+    ϕx = zeros(n₁, n₂)
+    ϕy = zeros(n₁, n₂)
 
     compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
-#    compute_ϕ!(h, ux, uy, ϕxx, ϕxy, ϕyy, τx, τy)
-
+    compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy)
     U₀ = zeros(nᵤ * n₁ * n₂)
-    pack_Uvec!(U₀, h, ux, uy, vx, vy, ϕx1, ϕx2, ϕx1, ϕy1, ϕy2, ϕy3, n₁, n₂)
+    pack_Uvec!(U₀, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, n₁, n₂)
 
     return (
         U₀=U₀,
@@ -297,8 +298,8 @@ function DropletSpreadingExperiment(
     ν = μ / ρ
 
     Re = u₀ * h₀ / ν
-    κ = σ / (ρ * h₀ * u₀^2)
-    β = (3π)^2 / 4
+    κ = σ / (ρ * h₀ * u₀^2) #1/We
+    β = (3π)^2 / 4 # beta is an arbitary dimensionless variable
 
     # echelle de vitesse sur  τ donc norme de (τx, τy) = 1
     τx = cos(θτ)
