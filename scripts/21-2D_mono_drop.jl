@@ -56,9 +56,9 @@ end
 # %%
 parameters = Dict(
     :hdrop_std => 0.2,
-    :tmax => 1,
-    :hₛ_ratio => 1.0,
-    :hₛ => 5e-2,
+    :tmax => 50000,
+    :hₛ_ratio => 0.5,
+    :hₛ => 0.1,
     :ndrops => 1,
     :h₀ => 0.0001,
     :μ => 0.001,
@@ -70,7 +70,7 @@ parameters = Dict(
     :mass => 220,
     :aspect_ratio => 3,
     :ρ => 1000.0,
-    :τ => 8.0,
+    :τ => 10,
     :L => 24,
     :two_dim => true,
     :reproject => true,

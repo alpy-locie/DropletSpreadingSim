@@ -225,8 +225,10 @@ function init_model(x, y, h, p)
 
     @unpack κ, τx, τy = p
 
-    ux = @. h * τx / 2
-    uy = @. h * τy / 2
+#    ux = @. h * τx / 2
+#    uy = @. h * τy / 2
+    ux = zeros(n₁, n₂)
+    uy = zeros(n₁, n₂)
     vx = zeros(n₁, n₂)
     vy = zeros(n₁, n₂)
     ϕxx = zeros(n₁, n₂)
@@ -271,7 +273,8 @@ function DropletSpreadingExperiment(
     two_dim=true,
     holdup=0.02,
     mass=nothing,
-    smooth=false
+    smooth=false,
+    g=9.8
 )
     if L < 2h₀
         error("Domain length < 2h₀")
@@ -294,10 +297,11 @@ function DropletSpreadingExperiment(
         mass = holdup * L^2 * aspect_ratio
     end
 
+#    u₀ = h₀ * τ / μ
     u₀ = h₀ * τ / μ
     ν = μ / ρ
 
-    Re = u₀ * h₀ / ν
+    Re = ρ *g * h₀ / ν
     κ = σ / (ρ * h₀ * u₀^2) #1/We
     β = (3π)^2 / 4 # beta is an arbitary dimensionless variable
 

@@ -48,7 +48,8 @@ end
 function compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
     u = @SVector [ux[i, j], uy[i, j]]
     τ = @SVector [τx, τy]
-    ϕ = (u ⊗ u) / 3h[i, j]^2 - 1 / 12h[i, j]^2 * ((u ⊗ u) - h[i, j]^2 * (τ ⊗ τ) / 4)
+#    ϕ = (u ⊗ u) / 3h[i, j]^2 - 1 / 12h[i, j]^2 * ((u ⊗ u) - h[i, j]^2 * (τ ⊗ τ) / 4)
+    ϕ = (u ⊗ u) / 3h[i, j]^2 - 1 / 12h[i, j]^2 * ((u ⊗ u))
     ϕ1 = @SVector [ϕx[i, j], ϕy[i, j]]
     ϕxx[i, j] = ϕ[1, 1]
     ϕxy[i, j] = ϕ[1, 2]
@@ -81,8 +82,8 @@ end
 function build_cache_cap(T, n₁, n₂) #Initializing variables
     x = T()
     @preallocate h, hux, huy, ux, uy, vx, vy,  ϕx, ϕy, ϕxx, ϕxy, ϕyy = similar(x, (n₁, n₂))
-    @preallocate fxx, fxy, fyy, gv, fvx, fvy, gx, gy, Pid = similar(x, (n₁, n₂))
-    return @ntuple h hux huy ux uy vx vy ϕx ϕy ϕxx ϕxy ϕyy fxx fxy fyy gv fvx fvy gx gy Pid
+    @preallocate fxx, fxy, fyy, gv, fvx, fvy, convxx, convxy, convyx, convyy, gx, gy, Pid = similar(x, (n₁, n₂))
+    return @ntuple h hux huy ux uy vx vy ϕx ϕy ϕxx ϕxy ϕyy fxx fxy fyy gv fvx fvy gx gy Pid convxx convxy convyx convyy
 end
 
 build_cache(T, n₁, n₂) = (cap=build_cache_cap(T, n₁, n₂), hyp=build_cache_hyp(T, n₁, n₂))
