@@ -45,22 +45,25 @@ function compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂; executor=ThreadedEx())#
     end
 end
 
-function compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
+function compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy, ls, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
     u = @SVector [ux[i, j], uy[i, j]]
-    τ = @SVector [τx, τy]
+    τ = @SVector [0.0, 0.0]
 #    ϕ = (u ⊗ u) / 3h[i, j]^2 - 1 / 12h[i, j]^2 * ((u ⊗ u) - h[i, j]^2 * (τ ⊗ τ) / 4)
-    ϕ = (u ⊗ u) / 3h[i, j]^2 - 1 / 12h[i, j]^2 * ((u ⊗ u))
+    #ϕ = (τ ⊗ τ) 
+    ϕ = (u ⊗ u)/(5*(3*ls+h[i, j])^2)
     ϕ1 = @SVector [ϕx[i, j], ϕy[i, j]]
     ϕxx[i, j] = ϕ[1, 1]
     ϕxy[i, j] = ϕ[1, 2]
     ϕyy[i, j] = ϕ[2, 2]
+    ϕx[i, j] = √(5*ϕ[1, 1])
+    ϕy[i, j] = √(5*ϕ[2, 2])
     return
 end
 
 
-function compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy; executor=ThreadedEx()) #Evaluating ϕ
+function compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy, ls; executor=ThreadedEx()) #Evaluating ϕ
     @floop executor for I in CartesianIndices(h)
-        compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy, Tuple(I)...)
+        compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy, ls, Tuple(I)...)
     end
 end
 

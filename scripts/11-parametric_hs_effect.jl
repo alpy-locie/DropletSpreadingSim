@@ -7,13 +7,13 @@ global_logger(TerminalLogger(stderr))
 
 # %%
 function do_simulate(p; filename)
-    @unpack h₀, σ, ρ, μ, τ, θτ, L, hₛ, hₛ_ratio, θₛ, dθₛ, hₛ, aspect_ratio, tmax,
+    @unpack h₀, ls, σ, ρ, μ, τ, θτ, L, hₛ, hₛ_ratio, θₛ, dθₛ, hₛ, aspect_ratio, tmax,
     mass, ndrops, hdrop_std, two_dim, reproject = p
     θₐ = deg2rad(θₛ + dθₛ)
     θᵣ = deg2rad(θₛ - dθₛ)
 
     # %%
-    experiment = DropletSpreadingExperiment(; h₀, σ, ρ, μ, τ, θτ, L, hₛ_ratio, hₛ, θₐ, θᵣ,
+    experiment = DropletSpreadingExperiment(; h₀, ls, σ, ρ, μ, τ, θτ, L, hₛ_ratio, hₛ, θₐ, θᵣ,
         aspect_ratio, mass, ndrops, hdrop_std, two_dim)
 
     # %%
@@ -50,12 +50,13 @@ end
 # %%
 parameters = Dict(
     :mass => 220,
-    :tmax => 400,
+    :tmax => 600,
     :hₛ_ratio => 1.0,
-    :hₛ => [1e-2, 2e-2, 2.5e-2, 3e-2, 5e-2, 6e-2, 7e-2, 8e-2, 9e-2, 1e-1, 1.5e-1, 2e-1],
+    :hₛ => [1e-1],
     :ndrops => 1,
     :hdrop_std => 0.2,
     :h₀ => 0.0001,
+    :ls => 0.1,
     :μ => 0.001,
     :σ => 0.075,
     :θₛ => 30,
@@ -75,7 +76,7 @@ parameters = dict_list(parameters)
 
 # %%
 for p ∈ parameters
-    out_dir = "data/outputs/hs_effect_wreproj"
+    out_dir = "data/outputs/test/transverseviscous1"
     filename = savename(p, "nc", accesses=[:hₛ])
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename

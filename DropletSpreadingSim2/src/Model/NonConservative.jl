@@ -58,13 +58,13 @@ function compute_skew_cap_coeffs!(
    
     gv[i, j] = g' * v #f2.W scalar
     fv = f * v #f1.W vector
-    conv=h[i,j]*(u * ϕ1')
-    convxx[i,j]=conv[1,1]
-    convxy[i,j]=conv[1,2]
-    convyx[i,j]=conv[2,1]
-    convyy[i,j]=conv[2,2]
-    convxx[i,j]= (@div(convxx,convyx))
-    convyy[i,j]= (@div(convxy,convyy))
+#    conv=h[i,j]*(ϕ1 * u')
+#    convxx[i,j]=conv[1,1]
+#    convxy[i,j]=conv[1,2]
+#    convyx[i,j]=conv[2,1]
+#    convyy[i,j]=conv[2,2]
+#    convxx[i,j]= (@div(convxx,convyx))
+#    convyy[i,j]= (@div(convxy,convyy))
     dej = (hₛ / h[i, j])^4 - (hₛ / h[i, j])^3# for n=4,m=3
     ε = 1.e-3
     θₛ = 0.5 * (θₐ + θᵣ) + 0.5 * (θᵣ - θₐ) * tanh((@div(hux, huy)) / ε) #Calculation of angle
@@ -96,10 +96,11 @@ end
 
 function skew_cap_kernel!(
     dU, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
-    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid,
+    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
     Re, β, τx, τy, convxx, convxy, convyx, convyy, 
     Δx, Δy, n₁, n₂, i, j
 )
+
 
     g = @SVector [gx[i, j], gy[i, j]]# Vector for f2
     f = @SMatrix [fxx[i, j] fxy[i, j]
@@ -109,21 +110,27 @@ function skew_cap_kernel!(
     ϕ1 = @SVector [ϕx[i, j], ϕy[i, j]]# Vector for ψ   
     u = @SVector [ux[i, j], uy[i, j]]# Vector for u
     v = @SVector [vx[i, j], vy[i, j]]# Vector for W
-    τ = @SVector [τx, τy]            # Vector for τe
-    gradh = @∇(h)
+    τ = @SVector [0.0, 0.0]            # Vector for τe
     dh= @SVector [(@dx(h)), (@dy(h))]# gradient of h
     gvect=@SVector [h[i,j], 0.0]
-  convdiv= @SVector [convxx[i,j], convyy[i,j]] 
+  convdiv= @SVector [ϕx[i, j]*(@dx(ux))+ϕy[i, j]*(@dy(ux)), ϕx[i, j]*(@dx(uy))+ϕy[i, j]*(@dy(uy))] 
 
  #   dhu = -(@∇(gv)) + (@divh∇(fvx, fvy)) + 3 / Re * (τ / 2 - u / h[i, j]) + h[i, j] * (@∇(Pid))# momentum balance
-    dhu = (-(@∇(gv)) + (@divh∇(fvx, fvy))  + h[i, j] * (@∇(Pid))+gvect)/Re# momentum balance
-    dhv = @SVector [vx[i, j], vy[i, j]]
+   dhu = (-(@∇(gv)) + (@divh∇(fvx, fvy))  + h[i, j] * (@∇(Pid))+gvect/Re-(u-h[i,j]*ϕ1)/(ls*Re))# momentum balance 
+   dhu2=(@divh∇(ux,uy))+(@divh∇t(ux,uy)) + 2 * ((@div(ux,uy))*(@∇(h))+ h[i,j]*(@∇div(ux,uy))) 
+   + (h[i,j]*(@∇(h))*(@div(ϕx, ϕy))+(h[i,j]^2/2)*(@∇div(ϕx, ϕy))) - ((ϕ1/2)*(((@dx(h))*(@dx(h))) + ((@dy(h))*(@dy(h))) + h[i,j]*(@∇2(h))))
+   - ((1/2)*h[i,j]*(@∇(ϕx, ϕy))*(@∇(h)))- ((1/2)*h[i,j]*(@div(ϕx, ϕy))*(@∇(h)))
+   - ((1/2)*((@∇(h))*(@∇(h))'+ h[i,j]*(@∇∇(h)))*ϕ1)
+ #   dhu = -(@∇(gv)) + (@divh∇(fvx, fvy)) - (1 / Re) * ( (3*u) / (h[i, j]+3*ls)) + h[i, j] * (@∇(Pid))+gvect/Re# momentum balance
     dhv = -g * (@div(ux, uy)) - f * (@divh∇(ux, uy))
-    dhϕ1 = ((u'*(@∇(h)) + h[i, j]*(@div(ux,uy)))ϕ1 + ((ϕ1'*(@∇(h)))+h[i, j]*(@div(ϕx,ϕy))) * u + (1. /7.)*((h[i, j])^2) * (@div(ϕx, ϕy)) * ϕ1 
-    + (2. /7.)*((h[i, j])^2)*(@∇(ϕx, ϕy))*ϕ1 - (u'*(@∇(h)))*ϕ1+(4. /7.)*(h[i, j])*(ϕ1'*(@∇(h)))*ϕ1)-15*ϕ1/Re
+    #dhϕ1 = ((u'*(@∇(h)) + h[i, j]*(@div(ux,uy)))*ϕ1 + ((ϕ1'*(@∇(h)))+h[i, j]*(@div(ϕx,ϕy))) * u + (1. /7.)*((h[i, j])^2) * (@div(ϕx, ϕy)) * ϕ1 
+    #+ (2. /7.)*((h[i, j])^2)*(@∇(ϕx, ϕy))*ϕ1 - (u'*(@∇(h)))*ϕ1+(4. /7.)*(h[i, j])*(ϕ1'*(@∇(h)))*ϕ1)-15*ϕ1/Re
     #+ (5)*u-15*ϕ1+ (5)*h[i, j]*ϕ1)# Equation for ψ1
-  
-
+    dhϕ1 = (-h[i, j]*convdiv+h[i, j]*(@div(ux,uy))*ϕ1 + (1. /7.)*((h[i, j])^2) * (@div(ϕx, ϕy)) * ϕ1 + (2. /7.)*((h[i, j])^2)*(@∇(ϕx, ϕy))*ϕ1+ (4. /7.)*(h[i, j])*((ϕ1'*@∇(h)))*ϕ1+(5/(ls*Re*h[i,j]))*(u-(3*ls+h[i,j])*ϕ1))
+    dhϕ11=(5 /2)*(@∇div(ux,uy))+ (@divh∇(ϕx, ϕy))+ (@divh∇t(ϕx, ϕy))+(5/(2*h[i,j]))*((@∇(ux,uy))*(@∇(h))+((@∇(h))'*(@∇(ux,uy)))')
+    +(5/h[i,j])*(@div(ux,uy))*(@∇(h)) - (3/8)* (ϕ1' * (@∇∇(h))')' + (7/8)*(@∇2(h)) * ϕ1 
+    - (1/8)*((@∇(h))' * (@∇(ϕx, ϕy)))' + (17/8)*(@div(ϕx, ϕy))*(@∇(h)) 
+    - (1/(2*h[i,j])) * (@∇(h))' * (@∇(h)) * ϕ1 - (1/(2*h[i,j])) *  (ϕ1' * (@∇(h))) * (@∇(h))# Equation for ψ1  
   #  dhϕ = (
   #      2h[i, j] * (@div(ux, uy)) * ϕ - (@∇(ux, uy)) * ϕ * h[i, j] - h[i, j] * ϕ * (@∇(ux, uy))'
   #      -
@@ -132,29 +139,26 @@ function skew_cap_kernel!(
   #  ) # enstrophy equation
     dhϕ = (
         2h[i, j] * (@div(ux, uy)) * ϕ - (@∇(ux, uy)) * ϕ * h[i, j] - h[i, j] * ϕ * (@∇(ux, uy))'
-        -
-        β / Re / h[i, j] * (
-            ϕ - (u ⊗ u) / (3h[i, j]^2) + 1 / (12h[i, j]^2) * ((u ⊗ u)) )
+        - (5 / (h[i,j]*ls*Re)) * (ϕ*(3*ls+h[i, j]) - (u ⊗ u)/(5*(3*ls+h[i, j])))
     )
     # dU represents the non-conservative part of the equations
     dU[gridded_to_flat(1, i, j; nᵤ, n₁, n₂)] = 0.0 
-    dU[gridded_to_flat(2, i, j; nᵤ, n₁, n₂)] = dhu[1]
-    dU[gridded_to_flat(3, i, j; nᵤ, n₁, n₂)] = dhu[2]
+    dU[gridded_to_flat(2, i, j; nᵤ, n₁, n₂)] = dhu[1]+dhu2[1]
+    dU[gridded_to_flat(3, i, j; nᵤ, n₁, n₂)] = dhu[2]+dhu2[2]
     dU[gridded_to_flat(4, i, j; nᵤ, n₁, n₂)] = dhv[1]
     dU[gridded_to_flat(5, i, j; nᵤ, n₁, n₂)] = dhv[2]
-    dU[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] = dhϕ1[2]
     dU[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] = dhϕ[1, 1]
     dU[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] = dhϕ[1, 2]
     dU[gridded_to_flat(8, i, j; nᵤ, n₁, n₂)] = dhϕ[2, 2]
-    dU[gridded_to_flat(9, i, j; nᵤ, n₁, n₂)] = dhϕ1[1]
-    dU[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] = dhϕ1[2]
+    dU[gridded_to_flat(9, i, j; nᵤ, n₁, n₂)] = dhϕ1[1]+dhϕ11[1]
+    dU[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] = dhϕ1[2]+dhϕ11[2]
     return
 end
 
 
 function skew_cap_kernel!(
     dU, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
-    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid,
+    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
     Re, β, τx, τy, convxx, convxy, convyx, convyy, 
     Δx, Δy, n₁, n₂; executor=ThreadedEx(),
 )
@@ -162,7 +166,7 @@ function skew_cap_kernel!(
         i, j = Tuple(I)
         skew_cap_kernel!(
             dU, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
-            gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid,
+            gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
             Re, β, τx, τy, convxx, convxy, convyx, convyy,
             Δx, Δy, n₁, n₂, i, j
         )
@@ -172,16 +176,16 @@ end
 function update_cap!(dUvec, Uvec, p, t; gridinfo, caches, executor=:auto)
     typed_caches = caches[typeof(Uvec)]
     cache_cap = typed_caches.cap
-    @unpack h, hux, huy, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy = cache_cap #storing temporary variables?
+    @unpack h, hux, huy, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy = cache_cap #storing temporary variables?
     @unpack fxx, fxy, fyy, gv, fvx, fvy, gx, gy, Pid, convxx, convxy, convyx, convyy = cache_cap
     @unpack Δx, Δy, n₁, n₂ = gridinfo # imports the grid size and its number
-    @unpack κ, Re, β, τx, τy, θₐ, θᵣ, hₛ = p # imports the inputs of the problem
+    @unpack κ, Re, β, τx, τy, θₐ, θᵣ, hₛ, ls = p # imports the inputs of the problem
 
     if executor == :auto
         executor = Uvec isa CuArray ? CUDAEx() : ThreadedEx()
     end
 
-    unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, Uvec, n₁, n₂; executor)# Removing h from each variable
+    unpack_Uvec!(h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy, Uvec, n₁, n₂; executor)# Removing h from each variable
     unpack_hu!(hux, huy, Uvec, n₁, n₂; executor)# For obtaining the values of hux and huy
 
     compute_skew_cap_coeffs!(# Evaluates PId, f1.W and f2.W for each grids
@@ -193,7 +197,7 @@ function update_cap!(dUvec, Uvec, p, t; gridinfo, caches, executor=:auto)
 
     skew_cap_kernel!(# Evaluates the non-conservative terms
         dUvec, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
-        gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid,
+        gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
         Re, β, τx, τy, convxx, convxy, convyx, convyy, 
         Δx, Δy, n₁, n₂;
         executor
