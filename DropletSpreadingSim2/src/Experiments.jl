@@ -227,6 +227,7 @@ function init_model(x, y, h, p)
 
 #    ux = @. h * τx / 2
 #    uy = @. h * τy / 2
+    #ux = ones(n₁, n₂)* 1000 *9.8 / 0.01
     ux = zeros(n₁, n₂)
     uy = zeros(n₁, n₂)
     vx = zeros(n₁, n₂)
@@ -305,7 +306,9 @@ function DropletSpreadingExperiment(
     Re = u₀ * h₀ / ν
     κ = σ / (ρ * h₀ * u₀^2) #1/We
     β = (3π)^2 / 4 # beta is an arbitary dimensionless variable
-
+@show(Re)
+@show(√κ)
+@show(u₀)
     # echelle de vitesse sur  τ donc norme de (τx, τy) = 1
     τx = cos(θτ)
     τy = sin(θτ)

@@ -84,7 +84,7 @@ end
 
 function build_cache_cap(T, n₁, n₂) #Initializing variables
     x = T()
-    @preallocate h, hux, huy, ux, uy, vx, vy,  ϕx, ϕy, ϕxx, ϕxy, ϕyy = similar(x, (n₁, n₂))
+    @preallocate h, hux, huy, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy = similar(x, (n₁, n₂))
     @preallocate fxx, fxy, fyy, gv, fvx, fvy, convxx, convxy, convyx, convyy, gx, gy, Pid = similar(x, (n₁, n₂))
     return @ntuple h hux huy ux uy vx vy ϕx ϕy ϕxx ϕxy ϕyy fxx fxy fyy gv fvx fvy gx gy Pid convxx convxy convyx convyy
 end
