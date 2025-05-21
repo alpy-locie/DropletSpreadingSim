@@ -121,10 +121,10 @@ function update_hyp_x!(dUvec, U, p, t; gridinfo, cache_hyp, executor=ThreadedEx(
 
     @floop executor for I in CartesianIndices((n₁, n₂))
         i, j = Tuple(I)
-        compute_caF_x!(cw₋, dw₋, aw₋, Fw₋, Uw₋, i, j)#To determine F(i-1)
-        compute_caF_x!(cw₊, dw₊, aw₊, Fw₊, Uw₊, i, j)#To determine F(i)
-        compute_caF_x!(ce₋, de₋, ae₋, Fe₋, Ue₋, i, j)#To determine F(i)
-        compute_caF_x!(ce₊, de₊, ae₊, Fe₊, Ue₊, i, j)#To determine F(i+1)
+        compute_caF_oldx!(cw₋, dw₋, aw₋, Fw₋, Uw₋, i, j)#To determine F(i-1)
+        compute_caF_oldx!(cw₊, dw₊, aw₊, Fw₊, Uw₊, i, j)#To determine F(i)
+        compute_caF_oldx!(ce₋, de₋, ae₋, Fe₋, Ue₋, i, j)#To determine F(i)
+        compute_caF_oldx!(ce₊, de₊, ae₊, Fe₊, Ue₊, i, j)#To determine F(i+1)
         for k in 1:nᵤ
             compute_boundaries_flux!(fw, Uw₊, Uw₋, cw₊, cw₋, aw₊, aw₋, Fw₊, Fw₋, i, j, k)# compute flux, f between i,i-1 cell
             compute_boundaries_flux!(fe, Ue₊, Ue₋, ce₊, ce₋, ae₊, ae₋, Fe₊, Fe₋, i, j, k)# compute flux, f between i+1,i cell
@@ -152,10 +152,10 @@ function update_hyp_y!(dUvec, U, p, t; gridinfo, cache_hyp, executor=ThreadedEx(
 
     @floop executor for I in CartesianIndices((n₁, n₂))
         i, j = Tuple(I)
-        compute_caF_y!(cs₋, ds₋, as₋, Fs₋, Us₋, i, j)#To determine F(j-1)
-        compute_caF_y!(cs₊, ds₊, as₊, Fs₊, Us₊, i, j)#To determine F(j)
-        compute_caF_y!(cn₋, dn₋, an₋, Fn₋, Un₋, i, j)#To determine F(j)
-        compute_caF_y!(cn₊, dn₊, an₊, Fn₊, Un₊, i, j)#To determine F(j+1)
+        compute_caF_oldy!(cs₋, ds₋, as₋, Fs₋, Us₋, i, j)#To determine F(j-1)
+        compute_caF_oldy!(cs₊, ds₊, as₊, Fs₊, Us₊, i, j)#To determine F(j)
+        compute_caF_oldy!(cn₋, dn₋, an₋, Fn₋, Un₋, i, j)#To determine F(j)
+        compute_caF_oldy!(cn₊, dn₊, an₊, Fn₊, Un₊, i, j)#To determine F(j+1)
         for k in 1:nᵤ
             compute_boundaries_flux!(fs, Us₊, Us₋, cs₊, cs₋, as₊, as₋, Fs₊, Fs₋, i, j, k)# compute flux, f between j,j-1 cell
             compute_boundaries_flux!(fn, Un₊, Un₋, cn₊, cn₋, an₊, an₋, Fn₊, Fn₋, i, j, k)# compute flux, f between j+1,j cell

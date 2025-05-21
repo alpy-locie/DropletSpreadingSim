@@ -225,7 +225,7 @@ function init_model(x, y, h, p)
 
     @unpack κ, τx, τy, ls = p
 
-#    ux = @. h * τx / 2
+   # ux = @. h^2 * (1000 *9.8) / (0.001*2)
 #    uy = @. h * τy / 2
     #ux = ones(n₁, n₂)* 1000 *9.8 / 0.01
     ux = zeros(n₁, n₂)
@@ -367,7 +367,7 @@ function DropletSpreadingExperiment(
     return DropletSpreadingExperiment(U₀, p, grid, hyp!, cap!, unpack, caches)
 end
 
-function ODEProblem(f::DropletSpreadingExperiment, tspan, args...; on=:cpu, compute_sparsity=false, kwargs...)
+function ODEProblem(f::DropletSpreadingExperiment, tspan, args...; on=:gpu, compute_sparsity=false, kwargs...)
     U₀ = f.U₀
     p = f.p
     if compute_sparsity

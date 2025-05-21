@@ -32,8 +32,6 @@ function compute_skew_cap_coeffs!(
         fyy[i, j] = √κ * √h[i, j] * 1 / √(1 + h[i, j] * 1 / 4κ * (vx[i, j]^2 + vy[i, j]^2)) * (1 - 1 / (1 + h[i, j] / 2κ * (vx[i, j]^2 + vy[i, j]^2)) * h[i, j] / 4κ * (vy[i, j]^2))
         gx[i, j] = h[i, j] * vx[i, j] / 2 * (1 + h[i, j] / 2κ * (vx[i, j]^2 + vy[i, j]^2))^(-1)
         gy[i, j] = h[i, j] * vy[i, j] / 2 * (1 + h[i, j] / 2κ * (vx[i, j]^2 + vy[i, j]^2))^(-1)
-    @show(h)
-    @show(κ)
     elseif MODE == :simple
         fxx[i, j] = fyy[i, j] = √κ * √h[i, j]
         fxy[i, j] = 0.0
@@ -121,21 +119,21 @@ function skew_cap_kernel!(
  #   dhu = -(@∇(gv)) + (@divh∇t(fvx, fvy)) + 3 / Re * (τ / 2 - u / h[i, j]) + h[i, j] * (@∇(Pid))# momentum balance
    #dhu = (-(@∇(gv)) + (@divh∇t(fvx, fvy))  + h[i, j] * (@∇(Pid))+gvect/Re-(u-h[i,j]*ϕ1)/(ls*Re))# momentum balance # divh∇ is now divh∇t
    #dhu2=(@divh∇(ux,uy))+(@divh∇t(ux,uy)) + 2 * ((@div(ux,uy))*(@∇(h))+ h[i,j]*(@∇div(ux,uy))) 
-   + (h[i,j]*(@∇(h))*(@div(ϕx, ϕy))+((h[i,j]^2)/2)*(@∇div(ϕx, ϕy)))
-   - ((1/2)*((@∇(h))*(@∇(h))'+ h[i,j]*(@∇∇(h)))*ϕ1) 
-   - ((ϕ1/2)*(((@dx(h))*(@dx(h))) + ((@dy(h))*(@dy(h))) + h[i,j]*(@∇2(h))))
-   - ((1/2)*h[i,j]*(@∇(ϕx, ϕy))*(@∇(h)))- ((1/2)*h[i,j]*(@div(ϕx, ϕy))*(@∇(h)))
+   #+ (h[i,j]*(@∇(h))*(@div(ϕx, ϕy))+((h[i,j]^2)/2)*(@∇div(ϕx, ϕy)))
+   #- ((1/2)*((@∇(h))*(@∇(h))'+ h[i,j]*(@∇∇(h)))*ϕ1) 
+   #- ((ϕ1/2)*(((@dx(h))*(@dx(h))) + ((@dy(h))*(@dy(h))) + h[i,j]*(@∇2(h))))
+   #- ((1/2)*h[i,j]*(@∇(ϕx, ϕy))*(@∇(h)))- ((1/2)*h[i,j]*(@div(ϕx, ϕy))*(@∇(h)))
    
-    dhu = -(@∇(gv)) + (@divh∇t(fvx, fvy)) - (1 / Re) * ( (3*u) / (h[i, j])) + h[i, j] * (@∇(Pid))+gvect/Re# momentum balance +3*ls
+    dhu = -(@∇(gv)) + (@divh∇t(fvx, fvy)) - (1 / Re) * ( (3*u) / (h[i, j])) + h[i, j] * (@∇(Pid))  #momentum balance +gvect/Re+3*ls
     dhv = -g * (@div(ux, uy)) - f * (@divh∇t(ux, uy))
     #dhϕ1 = ((u'*(@∇(h)) + h[i, j]*(@div(ux,uy)))*ϕ1 + ((ϕ1'*(@∇(h)))+h[i, j]*(@div(ϕx,ϕy))) * u + (1. /7.)*((h[i, j])^2) * (@div(ϕx, ϕy)) * ϕ1 
     #+ (2. /7.)*((h[i, j])^2)*(@∇(ϕx, ϕy))*ϕ1 - (u'*(@∇(h)))*ϕ1+(4. /7.)*(h[i, j])*(ϕ1'*(@∇(h)))*ϕ1)-15*ϕ1/Re
     #+ (5)*u-15*ϕ1+ (5)*h[i, j]*ϕ1)# Equation for ψ1
-    dhϕ1 = (-h[i, j]*convdiv+h[i, j]*(@div(ux,uy))*ϕ1 + (1. /7.)*((h[i, j])^2) * (@div(ϕx, ϕy)) * ϕ1 + (2. /7.)*((h[i, j])^2)*(@∇(ϕx, ϕy))*ϕ1+ (4. /7.)*(h[i, j])*((ϕ1'*@∇(h)))*ϕ1+(5/(ls*Re*h[i,j]))*(u-(3*ls+h[i,j])*ϕ1))
-    dhϕ11=(5 /2)*(@∇2(ux,uy))+ (@divh∇(ϕx, ϕy))+ (@divh∇t(ϕx, ϕy))+(5/(2*h[i,j]))*((@∇(ux,uy))*(@∇(h))+((@∇(ux,uy))'*(@∇(h))))
-    +(5/h[i,j])*(@div(ux,uy))*(@∇(h)) - (3/8) * ((@∇∇(h))*ϕ1) + (7/8)*(@∇2(h)) * ϕ1 
-    - (1/8)*((@∇(ϕx, ϕy))' * (@∇(h)) ) + (17/8)*(@div(ϕx, ϕy))*(@∇(h)) 
-    - (1/(2*h[i,j])) * (@∇(h))' * (@∇(h)) * ϕ1 - (1/(2*h[i,j])) *  (ϕ1' * (@∇(h))) * (@∇(h))# Equation for ψ1  
+    #dhϕ1 = (-h[i, j]*convdiv+h[i, j]*(@div(ux,uy))*ϕ1 + (1. /7.)*((h[i, j])^2) * (@div(ϕx, ϕy)) * ϕ1 + (2. /7.)*((h[i, j])^2)*(@∇(ϕx, ϕy))*ϕ1+ (4. /7.)*(h[i, j])*((ϕ1'*@∇(h)))*ϕ1+(5/(ls*Re*h[i,j]))*(u-(3*ls+h[i,j])*ϕ1))
+    #dhϕ11=(5 /2)*(@∇2(ux,uy))+ (@divh∇(ϕx, ϕy))+ (@divh∇t(ϕx, ϕy))+(5/(2*h[i,j]))*((@∇(ux,uy))*(@∇(h))+((@∇(ux,uy))'*(@∇(h))))
+    #+(5/h[i,j])*(@div(ux,uy))*(@∇(h)) - (3/8) * ((@∇∇(h))*ϕ1) + (7/8)*(@∇2(h)) * ϕ1 
+    #- (1/8)*((@∇(ϕx, ϕy))' * (@∇(h)) ) + (17/8)*(@div(ϕx, ϕy))*(@∇(h)) 
+    #- (1/(2*h[i,j])) * (@∇(h))' * (@∇(h)) * ϕ1 - (1/(2*h[i,j])) *  (ϕ1' * (@∇(h))) * (@∇(h))# Equation for ψ1  
     dhϕ = (
         2h[i, j] * (@div(ux, uy)) * ϕ - (@∇(ux, uy)) * ϕ * h[i, j] - h[i, j] * ϕ * (@∇(ux, uy))'
         -
@@ -155,8 +153,8 @@ function skew_cap_kernel!(
     dU[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] = dhϕ[1, 1]
     dU[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] = dhϕ[1, 2]
     dU[gridded_to_flat(8, i, j; nᵤ, n₁, n₂)] = dhϕ[2, 2]
-    dU[gridded_to_flat(9, i, j; nᵤ, n₁, n₂)] = dhϕ1[1]#+dhϕ11[1]
-    dU[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] = dhϕ1[2]#+dhϕ11[2]
+    dU[gridded_to_flat(9, i, j; nᵤ, n₁, n₂)] = 0.0#dhϕ1[1]+dhϕ11[1]
+    dU[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] = 0.0#dhϕ1[2]#+dhϕ11[2]
     return
 end
 
