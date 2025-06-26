@@ -49,30 +49,29 @@ end
 
 # %%
 parameters = Dict(
-    :mass => 220,
-    :tmax => 30,
+    :tmax => 600,
     :hₛ_ratio => 1.0,
-    :hₛ => [1e-1],
+    :hₛ => [2e-2],
     :ndrops => 1,
     :hdrop_std => 0.2,
-    :h₀ => 0.0001,
-    :ls => 0.01,
-    :μ => 0.1,
+    :h₀ => 0.001,
+    :ls => 0.001,
+    :μ => 0.01,
     #:μ => 0.01,
-    :σ => 0.075,
-    #:σ => 0.020,
-    :θₛ => 30,
-    #:θₛ => 50,
+    #:σ => 0.075,
+    :σ => 0.020,
+    #:θₛ => 30,
+    :θₛ => 50,
     :dθₛ => 0,
-    :save_timestep => 0.3,
+    :save_timestep => 30,
     :θτ => 0.0,
-    :mass => 220,
-    :aspect_ratio => 2,
-    :ρ => 1000.0,
-    #:ρ => 960.0,
-    :τ => 8.0,
-    :L => 24,
-    :two_dim => false,
+    :mass => 12.95,
+    :aspect_ratio => 4,
+    #:ρ => 1000.0,
+    :ρ => 964,
+    :τ => 0.0,
+    :L => 10,
+    :two_dim => true,
     :cfl_safety_factor => 0.9,
     :reproject => true,
 )
@@ -80,7 +79,7 @@ parameters = dict_list(parameters)
 
 # %%
 for p ∈ parameters
-    out_dir = "data/outputs/3-D/test8"
+    out_dir = "data/outputs/3-D/khwala_10cst_B_1_full_ls_001_hs_02"
     filename = savename(p, "nc", accesses=[:hₛ])
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename

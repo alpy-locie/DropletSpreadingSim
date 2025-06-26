@@ -225,7 +225,7 @@ function init_model(x, y, h, p)
 
     @unpack κ, τx, τy, ls = p
 
-   # ux = @. h^2 * (1000 *9.8) / (0.001*2)
+  # @show(h^2 * (1000 *9.8) / (0.001*2))
 #    uy = @. h * τy / 2
     #ux = ones(n₁, n₂)* 1000 *9.8 / 0.01
     ux = zeros(n₁, n₂)
@@ -263,8 +263,8 @@ function DropletSpreadingExperiment(
     τ,
     θτ,
     L,
-    θₐ=0.0,
-    θᵣ=0.0,
+    θₐ=50.5,
+    θᵣ=45.5,
     N=nothing,
     hₛ_ratio=nothing,
     hₛ=nothing,
@@ -276,7 +276,11 @@ function DropletSpreadingExperiment(
     holdup=0.02,
     mass=nothing,
     smooth=false,
-    g=9.8
+    #g=9.8*sin(0.15708)
+    #g=9.8*sin(0.331613)
+    #g=9.8*sin(0.0872665)
+    #g=9.8*sin(0.0698132)
+    g=9.8*sin(0.720283)
 )
     if L < 2h₀
         error("Domain length < 2h₀")
@@ -307,8 +311,8 @@ function DropletSpreadingExperiment(
     κ = σ / (ρ * h₀ * u₀^2) #1/We
     β = (3π)^2 / 4 # beta is an arbitary dimensionless variable
 @show(Re)
-@show(√κ)
-@show(u₀)
+@show((ρ * g *h₀^2/ σ))
+@show((μ*u₀/ σ))
     # echelle de vitesse sur  τ donc norme de (τx, τy) = 1
     τx = cos(θτ)
     τy = sin(θτ)
@@ -349,6 +353,13 @@ function DropletSpreadingExperiment(
 
     if ndrops == 1
         h = sum(drop.(R, 0, 0, θₛ, Ref(x), Ref(y))) .+ hi .+ hw
+           @show(R[1])
+           volh= π * (R[1]^3) * (((1 - cos(θₛ))^2)/(sin(θₛ)^3))*(sin(θₛ)+cos(θₛ)-1)
+           @show(volh)
+           @show(θₛ)
+           @show(θₐ)
+           @show(θᵣ)
+           @show((ρ * g *(h₀^2) * (volh^(2/3))/ σ))
     else
         d_posx = Uniform(xmin + Rmoy, xmax - Rmoy)
         if two_dim
@@ -365,6 +376,7 @@ function DropletSpreadingExperiment(
     end
     U₀, hyp!, cap!, unpack, grid, caches = init_model(x, y, h, p)
     return DropletSpreadingExperiment(U₀, p, grid, hyp!, cap!, unpack, caches)
+     @show(vol)
 end
 
 function ODEProblem(f::DropletSpreadingExperiment, tspan, args...; on=:gpu, compute_sparsity=false, kwargs...)
@@ -393,5 +405,4 @@ function ODEProblem(f::DropletSpreadingExperiment, tspan, args...; on=:gpu, comp
     hyp_func = ODEFunction(f.hyp!)
     return SplitODEProblem(cap_func, hyp_func, U₀, tspan, p, args...; kwargs...)
 end
-
 end

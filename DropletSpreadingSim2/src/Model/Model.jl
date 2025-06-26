@@ -51,12 +51,12 @@ function compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy, ls, i, j) 
 #    ϕ = (u ⊗ u) / 3h[i, j]^2 - 1 / 12h[i, j]^2 * ((u ⊗ u) - h[i, j]^2 * (τ ⊗ τ) / 4)
     #ϕ = (τ ⊗ τ) 
     ϕ = (u ⊗ u)/(5*(3*ls+h[i, j])^2)
-    ϕ1 = @SVector [ϕx[i, j], ϕy[i, j]]
+    #ϕ1 = @SVector [ϕx[i, j], ϕy[i, j]]
     ϕxx[i, j] = ϕ[1, 1]
     ϕxy[i, j] = ϕ[1, 2]
     ϕyy[i, j] = ϕ[2, 2]
-    ϕx[i, j] = √(5*ϕ[1, 1])
-    ϕy[i, j] = √(5*ϕ[2, 2])
+    #ϕx[i, j] = √(5*ϕ[1, 1])
+    #ϕy[i, j] = √(5*ϕ[2, 2])
     return
 end
 

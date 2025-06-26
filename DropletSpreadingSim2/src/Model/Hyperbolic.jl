@@ -48,22 +48,24 @@ end
 
 function compute_caF_x!(c, d, a, F, U, i, j)
     c[i, j] = U[i, j, 2] / U[i, j, 1] #ux
-    a[i, j] = √(3/5) *(max(U[i, j, 9] , 0)) # √(3/5)*max(hϕx,0)
+   #  a[i, j] = √(3/5) *(max(U[i, j, 9] , 0)) # √(3/5)*max(hϕx,0)
+    a[i, j] = √(3/5) *(abs(U[i, j, 9] )) # √(3/5)*max(hϕx,0)
     for k in 1:nᵤ
         F[i, j, k] = c[i, j] * U[i, j, k] #ux*h, ux*(h ux), ux*(h uy), ux*(h vx).. ux*(h ψ1y)
     end
-    F[i, j, 2] += U[i, j, 1] * U[i, j, 9]* U[i, j, 9]/5 # ux*(h ux) + h^3*ϕx/5
-    F[i, j, 3] += U[i, j, 1] * U[i, j, 9]* U[i, j, 10]/5# ux*(h uy) + h^3*ϕx/5
+      F[i, j, 2] += U[i, j, 1] * U[i, j, 9]* U[i, j, 9]/5 # ux*(h ux) + h^3*ϕx/5
+      F[i, j, 3] += U[i, j, 1] * U[i, j, 9]* U[i, j, 10]/5# ux*(h uy) + h^3*ϕx/5
     return
 end
 
 function compute_caF_oldx!(c, d, a, F, U, i, j)
     c[i, j] = U[i, j, 2] / U[i, j, 1] #ux
-    a[i, j] = √(3U[i, j, 1]) * √(max(U[i, j, 6], 0)) # √(3h)*√max(hϕxx,0)
+    #a[i, j] = √(3U[i, j, 1]) * √(max(U[i, j, 6], 0)) # √(3h)*√max(hϕxx,0)
+    a[i, j] = √(3U[i, j, 1]) * √(abs(U[i, j, 6])) # √(3h)*√max(hϕxx,0)
     for k in 1:nᵤ
         F[i, j, k] = c[i, j] * U[i, j, k] #ux*h, ux*(h ux), ux*(h uy), ux*(h vx).. ux*(h ψ1y)
     end
-   F[i, j, 2] += U[i, j, 1]^2 * U[i, j, 6] # ux*(h ux) + h^3*ϕx
+   F[i, j, 2] += U[i, j, 1]^2 * U[i, j, 6] # ux*(h ux) + h^3*ϕxx
    F[i, j, 3] += U[i, j, 1]^2 * U[i, j, 7] # ux*(h uy) + h^3*ϕxy
     return
 end
@@ -71,18 +73,20 @@ end
 
 function compute_caF_y!(c, d, a, F, U, i, j)
     c[i, j] = U[i, j, 3] / U[i, j, 1] #uy
-    a[i, j] = √(3/5) *(max(U[i, j, 10] , 0)) # (3/5)*√max(hϕy,0)
+ #   a[i, j] = √(3/5) *(max(U[i, j, 10] , 0)) # (3/5)*max(hϕy,0
+ a[i, j] = √(3/5) * abs(U[i, j, 10]) # (3/5)*max(hϕy,0
     for k in 1:nᵤ
         F[i, j, k] = c[i, j] * U[i, j, k] #uy*h, uy*(h ux), uy*(h uy), uy*(h vx).. uy*(h ψ1y)
     end
-    F[i, j, 2] += U[i, j, 1] * U[i, j, 9]* U[i, j, 10]/5 # uy*(h ux) + h^3*ϕxϕy/5
-    F[i, j, 3] += U[i, j, 1] * U[i, j, 10]* U[i, j, 10]/5 # uy*(h uy) + h^3*ϕx*ϕy/5
+   F[i, j, 2] += U[i, j, 1] * U[i, j, 9]* U[i, j, 10]/5 # uy*(h ux) + h^3*ϕxϕy/5
+   F[i, j, 3] += U[i, j, 1] * U[i, j, 10]* U[i, j, 10]/5 # uy*(h uy) + h^3*ϕx*ϕy/5
     return
 end
 
 function compute_caF_oldy!(c, d, a, F, U, i, j)
     c[i, j] = U[i, j, 3] / U[i, j, 1] #uy
-    a[i, j] = √(3U[i, j, 1]) * √(max(U[i, j, 8], 0)) # √(3h)*√max(hϕyy,0)
+ #   a[i, j] = √(3U[i, j, 1]) * √(max(U[i, j, 8], 0)) # √(3h)*√max(hϕyy,0)
+   a[i, j] = √(3U[i, j, 1]) * √(abs(U[i, j, 8])) # √(3h)*√max(hϕyy,0)
     for k in 1:nᵤ
         F[i, j, k] = c[i, j] * U[i, j, k] #uy*h, uy*(h ux), uy*(h uy), uy*(h vx).. uy*(h ψ1y)
     end
@@ -91,8 +95,8 @@ function compute_caF_oldy!(c, d, a, F, U, i, j)
     return
 end
 
+#@inline ps(cₗ, cᵣ, aₗ, aᵣ) = max(abs(cₗ) + aₗ, abs(cᵣ) + aᵣ)#ps=max((|ux|+√(3h)*√max(hϕx,0))(i+1),(|ux|+√(3h)*√max(hϕx,0))(i+1))
 @inline ps(cₗ, cᵣ, aₗ, aᵣ) = max(abs(cₗ) + aₗ, abs(cᵣ) + aᵣ)#ps=max((|ux|+√(3h)*√max(hϕx,0))(i+1),(|ux|+√(3h)*√max(hϕx,0))(i+1))
-
 
 @inline function compute_boundaries_flux!(f, U₊, U₋, c₊, c₋, a₊, a₋, F₊, F₋, i, j, k)
     f[i, j, k] = 0.5 * ((F₊[i, j, k] + F₋[i, j, k]) - ps(c₊[i, j], c₋[i, j], a₊[i, j], a₋[i, j]) * (U₊[i, j, k] - U₋[i, j, k]))  #Flux= 0.5*((F(i+1)-F(i+1))-(U(i+1)-U(i+1))*ps)
@@ -121,10 +125,10 @@ function update_hyp_x!(dUvec, U, p, t; gridinfo, cache_hyp, executor=ThreadedEx(
 
     @floop executor for I in CartesianIndices((n₁, n₂))
         i, j = Tuple(I)
-        compute_caF_oldx!(cw₋, dw₋, aw₋, Fw₋, Uw₋, i, j)#To determine F(i-1)
-        compute_caF_oldx!(cw₊, dw₊, aw₊, Fw₊, Uw₊, i, j)#To determine F(i)
-        compute_caF_oldx!(ce₋, de₋, ae₋, Fe₋, Ue₋, i, j)#To determine F(i)
-        compute_caF_oldx!(ce₊, de₊, ae₊, Fe₊, Ue₊, i, j)#To determine F(i+1)
+        compute_caF_x!(cw₋, dw₋, aw₋, Fw₋, Uw₋, i, j)#To determine F(i-1)
+        compute_caF_x!(cw₊, dw₊, aw₊, Fw₊, Uw₊, i, j)#To determine F(i)
+        compute_caF_x!(ce₋, de₋, ae₋, Fe₋, Ue₋, i, j)#To determine F(i)
+        compute_caF_x!(ce₊, de₊, ae₊, Fe₊, Ue₊, i, j)#To determine F(i+1)
         for k in 1:nᵤ
             compute_boundaries_flux!(fw, Uw₊, Uw₋, cw₊, cw₋, aw₊, aw₋, Fw₊, Fw₋, i, j, k)# compute flux, f between i,i-1 cell
             compute_boundaries_flux!(fe, Ue₊, Ue₋, ce₊, ce₋, ae₊, ae₋, Fe₊, Fe₋, i, j, k)# compute flux, f between i+1,i cell
@@ -152,14 +156,14 @@ function update_hyp_y!(dUvec, U, p, t; gridinfo, cache_hyp, executor=ThreadedEx(
 
     @floop executor for I in CartesianIndices((n₁, n₂))
         i, j = Tuple(I)
-        compute_caF_oldy!(cs₋, ds₋, as₋, Fs₋, Us₋, i, j)#To determine F(j-1)
-        compute_caF_oldy!(cs₊, ds₊, as₊, Fs₊, Us₊, i, j)#To determine F(j)
-        compute_caF_oldy!(cn₋, dn₋, an₋, Fn₋, Un₋, i, j)#To determine F(j)
-        compute_caF_oldy!(cn₊, dn₊, an₊, Fn₊, Un₊, i, j)#To determine F(j+1)
+        compute_caF_y!(cs₋, ds₋, as₋, Fs₋, Us₋, i, j)#To determine F(j-1)
+        compute_caF_y!(cs₊, ds₊, as₊, Fs₊, Us₊, i, j)#To determine F(j)
+        compute_caF_y!(cn₋, dn₋, an₋, Fn₋, Un₋, i, j)#To determine F(j)
+        compute_caF_y!(cn₊, dn₊, an₊, Fn₊, Un₊, i, j)#To determine F(j+1)
         for k in 1:nᵤ
             compute_boundaries_flux!(fs, Us₊, Us₋, cs₊, cs₋, as₊, as₋, Fs₊, Fs₋, i, j, k)# compute flux, f between j,j-1 cell
             compute_boundaries_flux!(fn, Un₊, Un₋, cn₊, cn₋, an₊, an₋, Fn₊, Fn₋, i, j, k)# compute flux, f between j+1,j cell
-            compute_flux_balance!(Fy, fn, fs, Δy, i, j, k)# Updating F in x direction
+            compute_flux_balance!(Fy, fn, fs, Δy, i, j, k)# Updating F in y direction
             vectorize_U!(dUvec, Fy, n₁, n₂, i, j, k) # Updating values of U
         end
     end

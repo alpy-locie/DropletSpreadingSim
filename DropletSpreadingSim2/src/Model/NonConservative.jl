@@ -112,49 +112,47 @@ function skew_cap_kernel!(
     v = @SVector [vx[i, j], vy[i, j]]# Vector for W
     τ = @SVector [0.0, 0.0]            # Vector for τe
     dh= @SVector [(@dx(h)), (@dy(h))]# gradient of h
-    gvect=@SVector [h[i,j], 0.0]
+    gvect=@SVector [h[i,j]*(1-cot(0.720283)*(@dx(h))), 0.0]
+    #gvect=@SVector [h[i,j], 0.0]
 
   convdiv= @SVector [ϕx[i, j]*(@dx(ux))+ϕy[i, j]*(@dy(ux)), ϕx[i, j]*(@dx(uy))+ϕy[i, j]*(@dy(uy))] 
 
  #   dhu = -(@∇(gv)) + (@divh∇t(fvx, fvy)) + 3 / Re * (τ / 2 - u / h[i, j]) + h[i, j] * (@∇(Pid))# momentum balance
-   #dhu = (-(@∇(gv)) + (@divh∇t(fvx, fvy))  + h[i, j] * (@∇(Pid))+gvect/Re-(u-h[i,j]*ϕ1)/(ls*Re))# momentum balance # divh∇ is now divh∇t
-   #dhu2=(@divh∇(ux,uy))+(@divh∇t(ux,uy)) + 2 * ((@div(ux,uy))*(@∇(h))+ h[i,j]*(@∇div(ux,uy))) 
-   #+ (h[i,j]*(@∇(h))*(@div(ϕx, ϕy))+((h[i,j]^2)/2)*(@∇div(ϕx, ϕy)))
-   #- ((1/2)*((@∇(h))*(@∇(h))'+ h[i,j]*(@∇∇(h)))*ϕ1) 
-   #- ((ϕ1/2)*(((@dx(h))*(@dx(h))) + ((@dy(h))*(@dy(h))) + h[i,j]*(@∇2(h))))
-   #- ((1/2)*h[i,j]*(@∇(ϕx, ϕy))*(@∇(h)))- ((1/2)*h[i,j]*(@div(ϕx, ϕy))*(@∇(h)))
+   dhuk = (-(@∇(gv)) + (@divh∇t(fvx, fvy))  + h[i, j] * (@∇(Pid))+gvect/Re)-(u-h[i,j]*ϕ1)/(ls*Re)# momentum balance # divh∇ is now divh∇t
+   dhu2=(@divh∇(ux,uy))+(@divh∇t(ux,uy)) + 2 * ((@div(ux,uy))*(@∇(h))+ h[i,j]*(@∇div(ux,uy))) 
+   + (h[i,j]*(@∇(h))*(@div(ϕx, ϕy))+((h[i,j]^2)/2)*(@∇div(ϕx, ϕy)))
+   - ((1/2)*((@∇(h))*(@∇(h))'+ h[i,j]*(@∇∇(h)))*ϕ1) 
+   - ((ϕ1/2)*(((@dx(h))*(@dx(h))) + ((@dy(h))*(@dy(h))) + h[i,j]*(@∇2(h))))
+   - ((1/2)*h[i,j]*(@∇(ϕx, ϕy))*(@∇(h)))- ((1/2)*h[i,j]*(@div(ϕx, ϕy))*(@∇(h)))
    
-    dhu = -(@∇(gv)) + (@divh∇t(fvx, fvy)) - (1 / Re) * ( (3*u) / (h[i, j])) + h[i, j] * (@∇(Pid))  #momentum balance +gvect/Re+3*ls
+    dhun = -(@∇(gv)) + (@divh∇t(fvx, fvy)) + h[i, j] * (@∇(Pid)) +gvect/Re - (1 / Re) * ( (3*u) / (h[i, j]+3*ls))  #momentum balance 
     dhv = -g * (@div(ux, uy)) - f * (@divh∇t(ux, uy))
-    #dhϕ1 = ((u'*(@∇(h)) + h[i, j]*(@div(ux,uy)))*ϕ1 + ((ϕ1'*(@∇(h)))+h[i, j]*(@div(ϕx,ϕy))) * u + (1. /7.)*((h[i, j])^2) * (@div(ϕx, ϕy)) * ϕ1 
-    #+ (2. /7.)*((h[i, j])^2)*(@∇(ϕx, ϕy))*ϕ1 - (u'*(@∇(h)))*ϕ1+(4. /7.)*(h[i, j])*(ϕ1'*(@∇(h)))*ϕ1)-15*ϕ1/Re
-    #+ (5)*u-15*ϕ1+ (5)*h[i, j]*ϕ1)# Equation for ψ1
-    #dhϕ1 = (-h[i, j]*convdiv+h[i, j]*(@div(ux,uy))*ϕ1 + (1. /7.)*((h[i, j])^2) * (@div(ϕx, ϕy)) * ϕ1 + (2. /7.)*((h[i, j])^2)*(@∇(ϕx, ϕy))*ϕ1+ (4. /7.)*(h[i, j])*((ϕ1'*@∇(h)))*ϕ1+(5/(ls*Re*h[i,j]))*(u-(3*ls+h[i,j])*ϕ1))
-    #dhϕ11=(5 /2)*(@∇2(ux,uy))+ (@divh∇(ϕx, ϕy))+ (@divh∇t(ϕx, ϕy))+(5/(2*h[i,j]))*((@∇(ux,uy))*(@∇(h))+((@∇(ux,uy))'*(@∇(h))))
-    #+(5/h[i,j])*(@div(ux,uy))*(@∇(h)) - (3/8) * ((@∇∇(h))*ϕ1) + (7/8)*(@∇2(h)) * ϕ1 
-    #- (1/8)*((@∇(ϕx, ϕy))' * (@∇(h)) ) + (17/8)*(@div(ϕx, ϕy))*(@∇(h)) 
-    #- (1/(2*h[i,j])) * (@∇(h))' * (@∇(h)) * ϕ1 - (1/(2*h[i,j])) *  (ϕ1' * (@∇(h))) * (@∇(h))# Equation for ψ1  
-    dhϕ = (
-        2h[i, j] * (@div(ux, uy)) * ϕ - (@∇(ux, uy)) * ϕ * h[i, j] - h[i, j] * ϕ * (@∇(ux, uy))'
-        -
-        β / Re / h[i, j] * (
-            ϕ - (u ⊗ u) / (3h[i, j]^2) + 1 / (12h[i, j]^2) * ((u ⊗ u) - h[i, j]^2 / 4 * (τ ⊗ τ)) )
-    ) # enstrophy equation
+    dhϕ1 = (-h[i, j]*convdiv+ h[i, j]*(@div(ux,uy))*ϕ1 + (1. /7.)*((h[i, j])^2) * (@div(ϕx, ϕy)) * ϕ1 + (2. /7.)*((h[i, j])^2)*(@∇(ϕx, ϕy))*ϕ1+ (4. /7.)*(h[i, j])*((ϕ1'*@∇(h)))*ϕ1)+(5/(ls*Re*h[i,j]))*(u-(3*ls+h[i,j])*ϕ1)
+    dhϕ11=(5 /2)*(@∇2(ux,uy))+ (@divh∇(ϕx, ϕy))+ (@divh∇t(ϕx, ϕy))+(5/(2*h[i,j]))*((@∇(ux,uy))*(@∇(h))+((@∇(ux,uy))'*(@∇(h))))
+    +(5/h[i,j])*(@div(ux,uy))*(@∇(h)) - (3/8) * ((@∇∇(h))*ϕ1) + (7/8)*(@∇2(h)) * ϕ1 
+    - (1/8)*((@∇(ϕx, ϕy))' * (@∇(h)) ) + (17/8)*(@div(ϕx, ϕy))*(@∇(h)) 
+    - (1/(2*h[i,j])) * (@∇(h))' * (@∇(h)) * ϕ1 - (1/(2*h[i,j])) *  (ϕ1' * (@∇(h))) * (@∇(h))# Equation for ψ1  
    # dhϕ = (
    #     2h[i, j] * (@div(ux, uy)) * ϕ - (@∇(ux, uy)) * ϕ * h[i, j] - h[i, j] * ϕ * (@∇(ux, uy))'
-   #     - (5 / (h[i,j]*ls*Re)) * (ϕ*(3*ls+h[i, j]) - (u ⊗ u)/(5*(3*ls+h[i, j])))
-    #)
+   #     -
+   #     β / Re / h[i, j] * (
+   #         ϕ - (u ⊗ u) / (3h[i, j]^2) + 1 / (12h[i, j]^2) * ((u ⊗ u) - h[i, j]^2 / 4 * (τ ⊗ τ)) )
+   # ) # enstrophy equation
+    dhϕ = (
+        2*h[i, j] * (@div(ux, uy)) * ϕ - (@∇(ux, uy)) * ϕ * h[i, j] - h[i, j] * ϕ * (@∇(ux, uy))'
+        - (5 / (h[i,j]*ls*Re)) * (ϕ*(3*ls+h[i, j]) - (u ⊗ u)/(5*(3*ls+h[i, j])))
+    )
     # dU represents the non-conservative part of the equations
     dU[gridded_to_flat(1, i, j; nᵤ, n₁, n₂)] = 0.0 
-    dU[gridded_to_flat(2, i, j; nᵤ, n₁, n₂)] = dhu[1]#+dhu2[1]
-    dU[gridded_to_flat(3, i, j; nᵤ, n₁, n₂)] = dhu[2]#+dhu2[2]
+    dU[gridded_to_flat(2, i, j; nᵤ, n₁, n₂)] = dhuk[1]+dhu2[1]/Re
+    dU[gridded_to_flat(3, i, j; nᵤ, n₁, n₂)] = dhuk[2]+dhu2[2]/Re
     dU[gridded_to_flat(4, i, j; nᵤ, n₁, n₂)] = dhv[1]
     dU[gridded_to_flat(5, i, j; nᵤ, n₁, n₂)] = dhv[2]
-    dU[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] = dhϕ[1, 1]
-    dU[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] = dhϕ[1, 2]
-    dU[gridded_to_flat(8, i, j; nᵤ, n₁, n₂)] = dhϕ[2, 2]
-    dU[gridded_to_flat(9, i, j; nᵤ, n₁, n₂)] = 0.0#dhϕ1[1]+dhϕ11[1]
-    dU[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] = 0.0#dhϕ1[2]#+dhϕ11[2]
+    dU[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] = 0.0#dhϕ[1, 1]
+    dU[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] = 0.0#dhϕ[1, 2]
+    dU[gridded_to_flat(8, i, j; nᵤ, n₁, n₂)] = 0.0#dhϕ[2, 2]
+    dU[gridded_to_flat(9, i, j; nᵤ, n₁, n₂)] = dhϕ1[1]+dhϕ11[1]/Re
+    dU[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] = dhϕ1[2]+dhϕ11[2]/Re
     return
 end
 

@@ -34,14 +34,14 @@ macro ∇(m)
     esc(:(Ops.∇($m, Δx, Δy, n₁, n₂, i, j)))
 end
 macro ∇t(mx, my)
-    esc(:(Ops.∇($mx, $my, Δx, Δy, n₁, n₂, i, j)))
+    esc(:(Ops.∇t($mx, $my, Δx, Δy, n₁, n₂, i, j)))
 end
 
 
 @inline ∇(mx, my, Δx, Δy, n₁, n₂, i, j) = @SMatrix [(@dx(mx)) (@dy(mx));  #[d/dx mx ex ex, d/dy mx ey ex; d/dx my ex ey, d/dx my ey ey]
     (@dx(my)) (@dy(my))]
 macro ∇(mx, my)
-    esc(:(Ops.∇t($mx, $my, Δx, Δy, n₁, n₂, i, j)))
+    esc(:(Ops.∇($mx, $my, Δx, Δy, n₁, n₂, i, j)))
 end
 
 
@@ -71,7 +71,7 @@ macro div(mxx, mxy, myy)
     esc(:(Ops.div($mxx, $mxy, $myy, Δx, Δy, n₁, n₂, i, j)))
 end
 
-@inline @bc (h, mx, my) function divh∇t(h, mx, my, Δx, Δy, n₁, n₂, i, j) #∇. h ∇[mx,my]
+@inline @bc (h, mx, my) function divh∇t(h, mx, my, Δx, Δy, n₁, n₂, i, j) #∇. h Tranposse{∇[mx,my]}
     ∂x⁰_h∂x_mx = (1 / 2 * (h[i+1, j] + h[i, j]) * (mx[i+1, j] - mx[i, j]) - 1 / 2 * (h[i-1, j] + h[i, j]) * (mx[i, j] - mx[i-1, j])) / Δx^2
     ∂y⁰⁰_h∂x⁰⁰_my = (h[i, j+1] * (my[i+1, j+1] - my[i-1, j+1]) - h[i, j-1] * (my[i+1, j-1] - my[i-1, j-1])) / (2Δx * 2Δy)
     ∂x⁰⁰_h∂y⁰⁰_mx = (h[i+1, j] * (mx[i+1, j+1] - mx[i+1, j-1]) - h[i-1, j] * (mx[i-1, j+1] - mx[i-1, j-1])) / (2Δx * 2Δy)
@@ -80,10 +80,10 @@ end
 end
 
 macro divh∇t(mx, my)
-    esc(:(Ops.divh∇(h, $mx, $my, Δx, Δy, n₁, n₂, i, j)))
+    esc(:(Ops.divh∇t(h, $mx, $my, Δx, Δy, n₁, n₂, i, j)))
 end
 
-@inline @bc (h, mx, my) function divh∇(h, mx, my, Δx, Δy, n₁, n₂, i, j)#∇. h Tranposse[∇[mx,my]]
+@inline @bc (h, mx, my) function divh∇(h, mx, my, Δx, Δy, n₁, n₂, i, j)#∇. h [∇[mx,my]]
     ∂x⁰_h∂x_mx = (1 / 2 * (h[i+1, j] + h[i, j]) * (mx[i+1, j] - mx[i, j]) - 1 / 2 * (h[i-1, j] + h[i, j]) * (mx[i, j] - mx[i-1, j])) / Δx^2
     ∂y⁰⁰_h∂y⁰⁰_mx = (1 / 2 * (h[i, j+1] + h[i, j]) * (mx[i, j+1] - mx[i, j]) - 1 / 2 * (h[i, j-1] + h[i, j]) * (mx[i, j] - mx[i, j-1])) / Δy^2
     ∂x⁰⁰_h∂x⁰⁰_my = (1 / 2 * (h[i+1, j] + h[i, j]) * (my[i+1, j] - my[i, j]) - 1 / 2 * (h[i-1, j] + h[i, j]) * (my[i, j] - my[i-1, j])) / Δx^2
@@ -92,7 +92,7 @@ end
 end
 
 macro divh∇(mx, my)
-    esc(:(Ops.divh∇t(h, $mx, $my, Δx, Δy, n₁, n₂, i, j)))
+    esc(:(Ops.divh∇(h, $mx, $my, Δx, Δy, n₁, n₂, i, j)))
 end
 
 @inline ∇div(mx, my, Δx, Δy, n₁, n₂, i, j) = @SVector [(@dxx(mx))+(@dxy(my)), (@dxy(mx))+(@dyy(my))] #∇(∇.[mx,my])
