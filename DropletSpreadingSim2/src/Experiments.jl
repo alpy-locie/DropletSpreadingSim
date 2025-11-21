@@ -291,7 +291,8 @@ function DropletSpreadingExperiment(
     end
 
     if isnothing(N)
-        δ = 2 * hₛ / hₛ_ratio
+        #δ = 2 * hₛ / hₛ_ratio
+        δ = 2 * 0.005
         N = ceil(1 + L / δ)
     end
     δ = L / (N - 1)
@@ -312,7 +313,10 @@ function DropletSpreadingExperiment(
     β = (3π)^2 / 4 # beta is an arbitary dimensionless variable
 @show(Re)
 @show((ρ * g *h₀^2/ σ))
+@show(((L/δ)*(1+aspect_ratio)))
 @show((μ*u₀/ σ))
+@show((N))
+@show((δ))
     # echelle de vitesse sur  τ donc norme de (τx, τy) = 1
     τx = cos(θτ)
     τy = sin(θτ)

@@ -14,7 +14,7 @@ macro dy(m)#d/dy
 end
 
 @inline @bc m dxx(m, Δx, Δy, n₁, n₂, i, j) = (m[i+1, j]-2*m[i, j] + m[i-1, j]) / (Δx)^2
-@inline @bc m dxy(m, Δx, Δy, n₁, n₂, i, j) = (m[i+1, j+1]-m[i+1, j-1]-m[i-1, j+1] + m[i-1, j-1]) / 4*(Δx)*(Δy)
+@inline @bc m dxy(m, Δx, Δy, n₁, n₂, i, j) = (m[i+1, j+1]-m[i+1, j-1]-m[i-1, j+1] + m[i-1, j-1]) / (4*(Δx)*(Δy))
 @inline @bc m dyy(m, Δx, Δy, n₁, n₂, i, j) = (m[i, j+1] -2*m[i, j]+ m[i, j-1]) / (Δy)^2
 macro dxx(m)#d^2/dx^2
     esc(:(Ops.dxx($m, Δx, Δy, n₁, n₂, i, j)))
