@@ -51,20 +51,20 @@ end
 #SSPRK432();
 # %%
 parameters = Dict(
-    :tmax => 600,
+    :tmax => 60,
     :hₛ_ratio => 2.0,
-    :hₛ => [2e-1,15e-2,1e-1,7e-2,5e-2,3e-2,2e-2],
+    :hₛ => [5e-2,3e-2,2e-2],
     #:hₛ => 5e-2,
     :ndrops => 1,
     :hdrop_std => 0.2,
     :h₀ => 0.001,
-    :ls => 0.002,
+    :ls => 0.02,
     #:ls => [2e-2,1e-2,5e-3,2e-3,1e-3,5e-4,2e-4],
     :μ => 0.01,
     #:μ => 0.01,
     #:σ => 0.075,
     :σ => 0.020,
-    :θₛ => 30,
+    :θₛ => 50,
     #:θₛ => [15,30,45,60,75],
     :dθₛ => 0,
     :save_timestep => 10,
@@ -84,7 +84,7 @@ parameters = dict_list(parameters)
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/outputs/3-D/Precursorfilm"
+    out_dir = "data/outputs/3-D/Precursorfilm_inclinationangle_15"
     filename = savename(p, "nc", accesses=[:hₛ])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))

@@ -47,7 +47,7 @@ show(io::IO, exp::DropletSpreadingExperiment) =
 
 function unpack_fields_flat(U, exp::DropletSpreadingExperiment; raw=false) #asigning values for the variables?
     @unpack n₁, n₂ = exp.grid
-    h, hux, huy, hvx, hvy, hϕxx, hϕxy, hϕyy, hϕx, hϕy  = eachslice(reshape(U, 10, n₁, n₂); dims=1)
+    h, hux, huy, hvx, hvy, hϕx, hϕy  = eachslice(reshape(U, 7, n₁, n₂); dims=1)
     if raw
         return (
             h=h,
@@ -55,25 +55,21 @@ function unpack_fields_flat(U, exp::DropletSpreadingExperiment; raw=false) #asig
             uy=huy,
             vx=hvx,
             vy=hvy,
-            ϕxx=hϕxx,
-            ϕxy=hϕxy,
-            ϕyy=hϕyy,
             ϕx=hϕx,
             ϕy=hϕy,
         )
     end
-    ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy =
-        [hux, huy, hvx, hvy, hϕxx, hϕxy, hϕyy, hϕx, hϕy] .|> ((var) -> var ./ h)
-    return (h=h, ux=ux, uy=uy, vx=vx, vy=vy, ϕxx=ϕxx, ϕxy=ϕxy, ϕyy=ϕyy, ϕx=ϕx, ϕy=ϕy)
+    ux, uy, vx, vy, ϕx, ϕy =
+        [hux, huy, hvx, hvy, hϕx, hϕy] .|> ((var) -> var ./ h)
+    return (h=h, ux=ux, uy=uy, vx=vx, vy=vy, ϕx=ϕx, ϕy=ϕy)
 end
 
 function unpack_fields_vect(U, exp::DropletSpreadingExperiment; raw=false)#Creating vectors
     @unpack n₁, n₂ = exp.grid
-    @unpack h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy = unpack_fields_flat(U, exp; raw)
+    @unpack h, ux, uy, vx, vy, ϕx, ϕy = unpack_fields_flat(U, exp; raw)
     u = [@SVector([ux[i, j], uy[i, j]]) for i = 1:n₁, j = 1:n₂]
     v = [@SVector([vx[i, j], vy[i, j]]) for i = 1:n₁, j = 1:n₂]
     ϕ1= [@SVector([ϕx[i, j], ϕy[i, j]]) for i = 1:n₁, j = 1:n₂]
-    ϕ = [@SMatrix([ϕxx[i, j] ϕxy[i, j]; ϕxy[i, j] ϕyy[i, j]]) for i = 1:n₁, j = 1:n₂]
     return (h=h, u=u, v=v, ϕ=ϕ, ϕ1=ϕ1)
 end
 
@@ -113,7 +109,7 @@ function build_save_callback(
         x_[:] = x |> collect
         y_[:] = y |> collect
 
-        for var in ["h", "ux", "uy", "vx", "vy", "ϕxx", "ϕxy", "ϕyy", "ϕx", "ϕy"]
+        for var in ["h", "ux", "uy", "vx", "vy", "ϕx", "ϕy"]
             defVar(ds, var, Float64, ("t", "x", "y"))
         end
     end
@@ -142,17 +138,17 @@ function build_reprojection_callback(
             executor = Uvec isa CuArray ? CUDAEx() : ThreadedEx()
         end
         @unpack n₁, n₂, Δx, Δy = exp.grid
-        @unpack h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy = exp.caches[typeof(Uvec)].cap
+        @unpack h, ux, uy, vx, vy, ϕx, ϕy = exp.caches[typeof(Uvec)].cap
         vx_new = copy(vx)
         vy_new = copy(vy)
         @unpack κ = exp.p
-        unpack_Uvec!(h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy, Uvec, n₁, n₂; executor)
+        unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, Uvec, n₁, n₂; executor)
         compute_v!(vx_new, vy_new, h, κ, Δx, Δy, n₁, n₂; executor)
         if isnothing(thresh) || (
             (norm(vx - vx_new) / norm(vx) > thresh) ||
             (norm(vy - vy_new) / norm(vy) > thresh)
         )
-            pack_Uvec!(integrator.u, h, ux, uy, vx_new, vy_new, ϕxx, ϕxy, ϕyy, ϕx, ϕy, n₁, n₂; executor)
+            pack_Uvec!(integrator.u, h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂; executor)
             return
         end
     end
@@ -232,16 +228,13 @@ function init_model(x, y, h, p)
     uy = zeros(n₁, n₂)
     vx = zeros(n₁, n₂)
     vy = zeros(n₁, n₂)
-    ϕxx = zeros(n₁, n₂)
-    ϕxy = zeros(n₁, n₂)
-    ϕyy = zeros(n₁, n₂)
     ϕx = zeros(n₁, n₂)
     ϕy = zeros(n₁, n₂)
 
     compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
-    compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy, ls)
+    compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls)
     U₀ = zeros(nᵤ * n₁ * n₂)
-    pack_Uvec!(U₀, h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy, n₁, n₂)
+    pack_Uvec!(U₀, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂)
 
     return (
         U₀=U₀,
