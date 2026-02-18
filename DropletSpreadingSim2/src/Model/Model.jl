@@ -3,7 +3,7 @@ export update_cap!, update_hyp!, compute_v!, compute_ϕ!, build_cache, build_cac
 using SparseArrays, StaticArrays, LinearAlgebra, UnPack, Reexport, FLoops
 using UnPack
 
-const nᵤ = 10
+const nᵤ = 7
 const MODE = :full # type of augumented formulations
 # const MODE = :simple
 # const MODE = nothing
@@ -45,25 +45,22 @@ function compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂; executor=ThreadedEx())#
     end
 end
 
-function compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy, ls, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
+function compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
     u = @SVector [ux[i, j], uy[i, j]]
     τ = @SVector [0.0, 0.0]
 #    ϕ = (u ⊗ u) / 3h[i, j]^2 - 1 / 12h[i, j]^2 * ((u ⊗ u) - h[i, j]^2 * (τ ⊗ τ) / 4)
     #ϕ = (τ ⊗ τ) 
     ϕ = (u ⊗ u)/(5*(3*ls+h[i, j])^2)
     #ϕ1 = @SVector [ϕx[i, j], ϕy[i, j]]
-    ϕxx[i, j] = ϕ[1, 1]
-    ϕxy[i, j] = ϕ[1, 2]
-    ϕyy[i, j] = ϕ[2, 2]
     #ϕx[i, j] = √(5*ϕ[1, 1])
     #ϕy[i, j] = √(5*ϕ[2, 2])
     return
 end
 
 
-function compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy, ls; executor=ThreadedEx()) #Evaluating ϕ
+function compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls; executor=ThreadedEx()) #Evaluating ϕ
     @floop executor for I in CartesianIndices(h)
-        compute_ϕ!(h, ux, uy, ϕx, ϕy, ϕxx, ϕxy, ϕyy, τx, τy, ls, Tuple(I)...)
+        compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls, Tuple(I)...)
     end
 end
 
@@ -84,9 +81,9 @@ end
 
 function build_cache_cap(T, n₁, n₂) #Initializing variables
     x = T()
-    @preallocate h, hux, huy, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy = similar(x, (n₁, n₂))
+    @preallocate h, hux, huy, ux, uy, vx, vy, ϕx, ϕy = similar(x, (n₁, n₂))
     @preallocate fxx, fxy, fyy, gv, fvx, fvy, convxx, convxy, convyx, convyy, gx, gy, Pid = similar(x, (n₁, n₂))
-    return @ntuple h hux huy ux uy vx vy ϕx ϕy ϕxx ϕxy ϕyy fxx fxy fyy gv fvx fvy gx gy Pid convxx convxy convyx convyy
+    return @ntuple h hux huy ux uy vx vy ϕx ϕy fxx fxy fyy gv fvx fvy gx gy Pid convxx convxy convyx convyy
 end
 
 build_cache(T, n₁, n₂) = (cap=build_cache_cap(T, n₁, n₂), hyp=build_cache_hyp(T, n₁, n₂))

@@ -58,13 +58,7 @@ function compute_skew_cap_coeffs!(
    
     gv[i, j] = g' * v #f2.W scalar
     fv = f * v #f1.W vector
-#    conv=h[i,j]*(ϕ1 * u')
-#    convxx[i,j]=conv[1,1]
-#    convxy[i,j]=conv[1,2]
-#    convyx[i,j]=conv[2,1]
-#    convyy[i,j]=conv[2,2]
-#    convxx[i,j]= (@div(convxx,convyx))
-#    convyy[i,j]= (@div(convxy,convyy))
+
     dej = (hₛ / h[i, j])^4 - (hₛ / h[i, j])^3# for n=4,m=3
     ε = 1.e-3
     θₛ = 0.5 * (θₐ + θᵣ) + 0.5 * (θᵣ - θₐ) * tanh((@div(hux, huy)) / ε) #Calculation of angle
@@ -95,7 +89,7 @@ end
 
 
 function skew_cap_kernel!(
-    dU, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
+    dU, h, ux, uy, vx, vy, ϕx, ϕy,
     gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
     Re, β, τx, τy, convxx, convxy, convyx, convyy, 
     Δx, Δy, n₁, n₂, i, j
@@ -105,8 +99,7 @@ function skew_cap_kernel!(
     g = @SVector [gx[i, j], gy[i, j]]# Vector for f2
     f = @SMatrix [fxx[i, j] fxy[i, j]
         fxy[i, j] fyy[i, j]]         # Matrix for f1
-    ϕ = @SMatrix [ϕxx[i, j] ϕxy[i, j]# Matrix for ϕ
-        ϕxy[i, j] ϕyy[i, j]]
+
     ϕ1 = @SVector [ϕx[i, j], ϕy[i, j]]# Vector for ψ   
     u = @SVector [ux[i, j], uy[i, j]]# Vector for u
     v = @SVector [vx[i, j], vy[i, j]]# Vector for W
@@ -133,34 +126,21 @@ function skew_cap_kernel!(
     - (1/(2*h[i,j])) * (@∇(h))' * (@∇(h)) * ϕ1 - (1/(2*h[i,j])) *  (ϕ1' * (@∇(h))) * (@∇(h))
     + (@divh∇(ϕx, ϕy))+ (@divh∇t(ϕx, ϕy))+(5/h[i,j])*(@div(ux,uy))*(@∇(h))+(5 /2)*(@∇2(ux,uy)) 
     +(5/(2*h[i,j]))*((@∇(ux,uy))*(@∇(h))+((@∇(ux,uy))'*(@∇(h))))# Equation for ψ1 
-    #
-   # dhϕ = (
-   #     2h[i, j] * (@div(ux, uy)) * ϕ - (@∇(ux, uy)) * ϕ * h[i, j] - h[i, j] * ϕ * (@∇(ux, uy))'
-   #     -
-   #     β / Re / h[i, j] * (
-   #         ϕ - (u ⊗ u) / (3h[i, j]^2) + 1 / (12h[i, j]^2) * ((u ⊗ u) - h[i, j]^2 / 4 * (τ ⊗ τ)) )
-   # ) # enstrophy equation
-    dhϕ = (
-        2*h[i, j] * (@div(ux, uy)) * ϕ - (@∇(ux, uy)) * ϕ * h[i, j] - h[i, j] * ϕ * (@∇(ux, uy))'
-        - (5 / (h[i,j]*ls*Re)) * (ϕ*(3*ls+h[i, j]) - (u ⊗ u)/(5*(3*ls+h[i, j])))
-    )
+
     # dU represents the non-conservative part of the equations
     dU[gridded_to_flat(1, i, j; nᵤ, n₁, n₂)] = 0.0 
     dU[gridded_to_flat(2, i, j; nᵤ, n₁, n₂)] = dhuk[1]+dhu2[1]/Re
     dU[gridded_to_flat(3, i, j; nᵤ, n₁, n₂)] = dhuk[2]+dhu2[2]/Re
     dU[gridded_to_flat(4, i, j; nᵤ, n₁, n₂)] = dhv[1]
     dU[gridded_to_flat(5, i, j; nᵤ, n₁, n₂)] = dhv[2]
-    dU[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] = 0.0#dhϕ[1, 1]
-    dU[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] = 0.0#dhϕ[1, 2]
-    dU[gridded_to_flat(8, i, j; nᵤ, n₁, n₂)] = 0.0#dhϕ[2, 2]
-    dU[gridded_to_flat(9, i, j; nᵤ, n₁, n₂)] = dhϕ1[1]+dhϕ11[1]/Re
-    dU[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] = dhϕ1[2]+dhϕ11[2]/Re
+    dU[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] = dhϕ1[1]+dhϕ11[1]/Re
+    dU[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] = dhϕ1[2]+dhϕ11[2]/Re
     return
 end
 
 
 function skew_cap_kernel!(
-    dU, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
+    dU, h, ux, uy, vx, vy, ϕx, ϕy,
     gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
     Re, β, τx, τy, convxx, convxy, convyx, convyy, 
     Δx, Δy, n₁, n₂; executor=ThreadedEx(),
@@ -168,7 +148,7 @@ function skew_cap_kernel!(
     @floop executor for I in CartesianIndices(h)# Evaluates the non-conservative terms for each grids
         i, j = Tuple(I)
         skew_cap_kernel!(
-            dU, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
+            dU, h, ux, uy, vx, vy, ϕx, ϕy,
             gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
             Re, β, τx, τy, convxx, convxy, convyx, convyy,
             Δx, Δy, n₁, n₂, i, j
@@ -179,7 +159,7 @@ end
 function update_cap!(dUvec, Uvec, p, t; gridinfo, caches, executor=:auto)
     typed_caches = caches[typeof(Uvec)]
     cache_cap = typed_caches.cap
-    @unpack h, hux, huy, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy = cache_cap #storing temporary variables?
+    @unpack h, hux, huy, ux, uy, vx, vy, ϕx, ϕy = cache_cap #storing temporary variables?
     @unpack fxx, fxy, fyy, gv, fvx, fvy, gx, gy, Pid, convxx, convxy, convyx, convyy = cache_cap
     @unpack Δx, Δy, n₁, n₂ = gridinfo # imports the grid size and its number
     @unpack κ, Re, β, τx, τy, θₐ, θᵣ, hₛ, ls = p # imports the inputs of the problem
@@ -188,7 +168,7 @@ function update_cap!(dUvec, Uvec, p, t; gridinfo, caches, executor=:auto)
         executor = Uvec isa CuArray ? CUDAEx() : ThreadedEx()
     end
 
-    unpack_Uvec!(h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy, Uvec, n₁, n₂; executor)# Removing h from each variable
+    unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, Uvec, n₁, n₂; executor)# Removing h from each variable
     unpack_hu!(hux, huy, Uvec, n₁, n₂; executor)# For obtaining the values of hux and huy
 
     compute_skew_cap_coeffs!(# Evaluates PId, f1.W and f2.W for each grids
@@ -199,7 +179,7 @@ function update_cap!(dUvec, Uvec, p, t; gridinfo, caches, executor=:auto)
     )
 
     skew_cap_kernel!(# Evaluates the non-conservative terms
-        dUvec, h, ux, uy, vx, vy, ϕx, ϕy, ϕxx, ϕxy, ϕyy,
+        dUvec, h, ux, uy, vx, vy, ϕx, ϕy,
         gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
         Re, β, τx, τy, convxx, convxy, convyx, convyy, 
         Δx, Δy, n₁, n₂;

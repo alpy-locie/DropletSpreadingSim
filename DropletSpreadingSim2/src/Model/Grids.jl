@@ -49,48 +49,42 @@ function matricize_Uvec!(U, Uvec, n₁, n₂; executor=ThreadedEx())
     return U
 end
 
-function pack_Uvec!(Uvec, h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy, n₁, n₂, i, j)
+function pack_Uvec!(Uvec, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, i, j)
     Uvec[gridded_to_flat(1, i, j; nᵤ, n₁, n₂)] = h[i, j]
     Uvec[gridded_to_flat(2, i, j; nᵤ, n₁, n₂)] = h[i, j] * ux[i, j]
     Uvec[gridded_to_flat(3, i, j; nᵤ, n₁, n₂)] = h[i, j] * uy[i, j]
     Uvec[gridded_to_flat(4, i, j; nᵤ, n₁, n₂)] = h[i, j] * vx[i, j]
     Uvec[gridded_to_flat(5, i, j; nᵤ, n₁, n₂)] = h[i, j] * vy[i, j]
-    Uvec[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] = h[i, j] * ϕxx[i, j]
-    Uvec[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] = h[i, j] * ϕxy[i, j]
-    Uvec[gridded_to_flat(8, i, j; nᵤ, n₁, n₂)] = h[i, j] * ϕyy[i, j]
-    Uvec[gridded_to_flat(9, i, j; nᵤ, n₁, n₂)] = h[i, j] * ϕx[i, j]
-    Uvec[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] = h[i, j] * ϕy[i, j]
+    Uvec[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] = h[i, j] * ϕx[i, j]
+    Uvec[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] = h[i, j] * ϕy[i, j]
     return
 end
 
-function pack_Uvec!(Uvec, h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy, n₁, n₂; executor=ThreadedEx())
+function pack_Uvec!(Uvec, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂; executor=ThreadedEx())
     @floop executor for I in CartesianIndices((n₁, n₂))
         i, j = Tuple(I)
-        pack_Uvec!(Uvec, h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy, n₁, n₂, i, j)
+        pack_Uvec!(Uvec, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, i, j)
     end
     return Uvec
 end
 
-function unpack_Uvec!(h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy, Uvec, n₁, n₂, i, j)
+function unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, Uvec, n₁, n₂, i, j)
     h[i, j] = Uvec[gridded_to_flat(1, i, j; nᵤ, n₁, n₂)]
     ux[i, j] = Uvec[gridded_to_flat(2, i, j; nᵤ, n₁, n₂)] / h[i, j]
     uy[i, j] = Uvec[gridded_to_flat(3, i, j; nᵤ, n₁, n₂)] / h[i, j]
     vx[i, j] = Uvec[gridded_to_flat(4, i, j; nᵤ, n₁, n₂)] / h[i, j]
     vy[i, j] = Uvec[gridded_to_flat(5, i, j; nᵤ, n₁, n₂)] / h[i, j]
-    ϕxx[i, j] = Uvec[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] / h[i, j]
-    ϕxy[i, j] = Uvec[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] / h[i, j]
-    ϕyy[i, j] = Uvec[gridded_to_flat(8, i, j; nᵤ, n₁, n₂)] / h[i, j]
-    ϕx[i, j] = Uvec[gridded_to_flat(9, i, j; nᵤ, n₁, n₂)] / h[i, j]
-    ϕy[i, j] = Uvec[gridded_to_flat(10, i, j; nᵤ, n₁, n₂)] / h[i, j]
+    ϕx[i, j] = Uvec[gridded_to_flat(6, i, j; nᵤ, n₁, n₂)] / h[i, j]
+    ϕy[i, j] = Uvec[gridded_to_flat(7, i, j; nᵤ, n₁, n₂)] / h[i, j]
     return
 end
 
-function unpack_Uvec!(h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy, Uvec, n₁, n₂; executor=ThreadedEx())
+function unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, Uvec, n₁, n₂; executor=ThreadedEx())
     @floop executor for I in CartesianIndices((n₁, n₂))
         i, j = Tuple(I)
-        unpack_Uvec!(h, ux, uy, vx, vy, ϕxx, ϕxy, ϕyy, ϕx, ϕy, Uvec, n₁, n₂, i, j)
+        unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, Uvec, n₁, n₂, i, j)
     end
-    return h, ux, uy, vx, vy,  ϕxx, ϕxy, ϕyy, ϕx, ϕy
+    return h, ux, uy, vx, vy, ϕx, ϕy
 end
 
 end
