@@ -9,7 +9,7 @@ using ..Model: MODE, nᵤ
 
 @inline minmod(x, y) = 0.5 * (sign(x) + sign(y)) * min(abs(x), abs(y)) #discritisation for second order
 
-@bc U function update_bounds_x!(Uw₋, Uw₊, Ue₋, Ue₊, U, n₁, n₂, Δx, Δy, i, j, k; order=2) #discretisation scheme along x
+@bc U function update_bounds_x!(Uw₋, Uw₊, Ue₋, Ue₊, U, n₁, n₂, Δx, Δy, i, j, k; order=1) #discretisation scheme along x
     if order == 2
         ∇Ui = minmod((U[i, j, k] - U[i-1, j, k]) / Δx, (U[i+1, j, k] - U[i, j, k]) / Δx)
         ∇Ue = minmod((U[i+1, j, k] - U[i, j, k]) / Δx, (U[i+2, j, k] - U[i+1, j, k]) / Δx)
@@ -27,7 +27,7 @@ using ..Model: MODE, nᵤ
     return
 end
 
-@bc U function update_bounds_y!(Us₋, Us₊, Un₋, Un₊, U, n₁, n₂, Δx, Δy, i, j, k; order=2) #discretisation scheme along y
+@bc U function update_bounds_y!(Us₋, Us₊, Un₋, Un₊, U, n₁, n₂, Δx, Δy, i, j, k; order=1) #discretisation scheme along y
     if order == 2
         ∇Ui = minmod((U[i, j, k] - U[i, j-1, k]) / Δy, (U[i, j+1, k] - U[i, j, k]) / Δy)
         ∇Un = minmod((U[i, j+1, k] - U[i, j, k]) / Δy, (U[i, j+2, k] - U[i, j+1, k]) / Δy)
@@ -49,24 +49,12 @@ end
 function compute_caF_x!(c, d, a, F, U, i, j)
     c[i, j] = U[i, j, 2] / U[i, j, 1] #ux
    #  a[i, j] = √(3/5) *(max(U[i, j, 9] , 0)) # √(3/5)*max(hϕx,0)
-    a[i, j] = √(3/5) *(abs(U[i, j, 9] )) # √(3/5)*max(hϕx,0)
+    a[i, j] = √(3/5) *(abs(U[i, j, 6] )) # √(3/5)*max(hϕx,0)
     for k in 1:nᵤ
         F[i, j, k] = c[i, j] * U[i, j, k] #ux*h, ux*(h ux), ux*(h uy), ux*(h vx).. ux*(h ψ1y)
     end
-      F[i, j, 2] += U[i, j, 1] * U[i, j, 9]* U[i, j, 9]/5 # ux*(h ux) + h^3*ϕx/5
-      F[i, j, 3] += U[i, j, 1] * U[i, j, 9]* U[i, j, 10]/5# ux*(h uy) + h^3*ϕx/5
-    return
-end
-
-function compute_caF_oldx!(c, d, a, F, U, i, j)
-    c[i, j] = U[i, j, 2] / U[i, j, 1] #ux
-    #a[i, j] = √(3U[i, j, 1]) * √(max(U[i, j, 6], 0)) # √(3h)*√max(hϕxx,0)
-    a[i, j] = √(3U[i, j, 1]) * √(abs(U[i, j, 6])) # √(3h)*√max(hϕxx,0)
-    for k in 1:nᵤ
-        F[i, j, k] = c[i, j] * U[i, j, k] #ux*h, ux*(h ux), ux*(h uy), ux*(h vx).. ux*(h ψ1y)
-    end
-   F[i, j, 2] += U[i, j, 1]^2 * U[i, j, 6] # ux*(h ux) + h^3*ϕxx
-   F[i, j, 3] += U[i, j, 1]^2 * U[i, j, 7] # ux*(h uy) + h^3*ϕxy
+      F[i, j, 2] += U[i, j, 1] * U[i, j, 6]* U[i, j, 6]/5 # ux*(h ux) + h^3*ϕx/5
+      F[i, j, 3] += U[i, j, 1] * U[i, j, 6]* U[i, j, 7]/5# ux*(h uy) + h^3*ϕx/5
     return
 end
 
@@ -74,24 +62,12 @@ end
 function compute_caF_y!(c, d, a, F, U, i, j)
     c[i, j] = U[i, j, 3] / U[i, j, 1] #uy
  #   a[i, j] = √(3/5) *(max(U[i, j, 10] , 0)) # (3/5)*max(hϕy,0
- a[i, j] = √(3/5) * abs(U[i, j, 10]) # (3/5)*max(hϕy,0
+ a[i, j] = √(3/5) * abs(U[i, j, 7]) # (3/5)*max(hϕy,0
     for k in 1:nᵤ
         F[i, j, k] = c[i, j] * U[i, j, k] #uy*h, uy*(h ux), uy*(h uy), uy*(h vx).. uy*(h ψ1y)
     end
-   F[i, j, 2] += U[i, j, 1] * U[i, j, 9]* U[i, j, 10]/5 # uy*(h ux) + h^3*ϕxϕy/5
-   F[i, j, 3] += U[i, j, 1] * U[i, j, 10]* U[i, j, 10]/5 # uy*(h uy) + h^3*ϕx*ϕy/5
-    return
-end
-
-function compute_caF_oldy!(c, d, a, F, U, i, j)
-    c[i, j] = U[i, j, 3] / U[i, j, 1] #uy
- #   a[i, j] = √(3U[i, j, 1]) * √(max(U[i, j, 8], 0)) # √(3h)*√max(hϕyy,0)
-   a[i, j] = √(3U[i, j, 1]) * √(abs(U[i, j, 8])) # √(3h)*√max(hϕyy,0)
-    for k in 1:nᵤ
-        F[i, j, k] = c[i, j] * U[i, j, k] #uy*h, uy*(h ux), uy*(h uy), uy*(h vx).. uy*(h ψ1y)
-    end
-    F[i, j, 2] += U[i, j, 1]^2 * U[i, j, 7] # uy*(h ux) + h^3*ϕxy
-    F[i, j, 3] += U[i, j, 1]^2 * U[i, j, 8] # uy*(h uy) + h^3*ϕyy
+   F[i, j, 2] += U[i, j, 1] * U[i, j, 6]* U[i, j, 7]/5 # uy*(h ux) + h^3*ϕxϕy/5
+   F[i, j, 3] += U[i, j, 1] * U[i, j, 7]* U[i, j, 7]/5 # uy*(h uy) + h^3*ϕx*ϕy/5
     return
 end
 
@@ -99,7 +75,7 @@ end
 @inline ps(cₗ, cᵣ, aₗ, aᵣ) = max(abs(cₗ) + aₗ, abs(cᵣ) + aᵣ)#ps=max((|ux|+√(3h)*√max(hϕx,0))(i+1),(|ux|+√(3h)*√max(hϕx,0))(i+1))
 
 @inline function compute_boundaries_flux!(f, U₊, U₋, c₊, c₋, a₊, a₋, F₊, F₋, i, j, k)
-    f[i, j, k] = 0.5 * ((F₊[i, j, k] + F₋[i, j, k]) - ps(c₊[i, j], c₋[i, j], a₊[i, j], a₋[i, j]) * (U₊[i, j, k] - U₋[i, j, k]))  #Flux= 0.5*((F(i+1)-F(i+1))-(U(i+1)-U(i+1))*ps)
+    f[i, j, k] = 0.5 * ((F₊[i, j, k] + F₋[i, j, k]) - ps(c₊[i, j], c₋[i, j], a₊[i, j], a₋[i, j]) * (U₊[i, j, k] - U₋[i, j, k]))  #Flux= 0.5*((F(i+1)+F(i+1))-(U(i+1)-U(i+1))*ps)
     return
 end
 
