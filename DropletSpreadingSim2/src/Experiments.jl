@@ -280,7 +280,7 @@ function DropletSpreadingExperiment(
     #g=9.8*sin(0.331613)
     #g=9.8*sin(0.0872665)
     #g=9.8*sin(0.0698132)
-    g=9.8*sin(0.720283)
+    g=9.8*sin(0.785398) # angle - 41.2
 )
     if L < 2h₀
         error("Domain length < 2h₀")
@@ -291,8 +291,8 @@ function DropletSpreadingExperiment(
     end
 
     if isnothing(N)
-        #δ = 2 * hₛ / hₛ_ratio
-        δ = 2 * 0.005
+        δ = 2 * hₛ / hₛ_ratio
+        #δ = 2 * 0.005
         N = ceil(1 + L / δ)
     end
     δ = L / (N - 1)

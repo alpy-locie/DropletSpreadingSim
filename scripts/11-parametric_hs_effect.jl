@@ -51,19 +51,21 @@ end
 #SSPRK432();
 # %%
 parameters = Dict(
-    :tmax => 1200,
-    :hₛ_ratio => 1.0,
-    :hₛ => [2e-1,17e-2,15e-2,12e-2,1e-1,8e-2,7e-2,5e-2,3e-2,2e-2],
+    :tmax => 600,
+    :hₛ_ratio => 2.0,
+    :hₛ => [2e-1,15e-2,1e-1,7e-2,5e-2,3e-2,2e-2],
+    #:hₛ => 5e-2,
     :ndrops => 1,
     :hdrop_std => 0.2,
     :h₀ => 0.001,
     :ls => 0.002,
+    #:ls => [2e-2,1e-2,5e-3,2e-3,1e-3,5e-4,2e-4],
     :μ => 0.01,
     #:μ => 0.01,
     #:σ => 0.075,
     :σ => 0.020,
-    #:θₛ => 30,
-    :θₛ => 50,
+    :θₛ => 30,
+    #:θₛ => [15,30,45,60,75],
     :dθₛ => 0,
     :save_timestep => 10,
     :θτ => 0.0,
@@ -72,8 +74,8 @@ parameters = Dict(
     #:ρ => 1000.0,
     :ρ => 964,
     :τ => 0.0,
-    :L => 6,
-    :two_dim => false,
+    :L => 8,
+    :two_dim => true,
     :cfl_safety_factor => 0.9,
     :reproject => true,
 )
@@ -81,8 +83,10 @@ parameters = dict_list(parameters)
 
 # %%
 for p ∈ parameters
-    out_dir = "data/outputs/2-D/test"
+    #params = (hₛ="0.05", hₛ_ratio="4")
+    out_dir = "data/outputs/3-D/Precursorfilm"
     filename = savename(p, "nc", accesses=[:hₛ])
+    #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename
         continue

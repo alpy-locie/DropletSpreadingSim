@@ -112,7 +112,7 @@ function skew_cap_kernel!(
     v = @SVector [vx[i, j], vy[i, j]]# Vector for W
     τ = @SVector [0.0, 0.0]            # Vector for τe
     dh= @SVector [(@dx(h)), (@dy(h))]# gradient of h
-    gvect=@SVector [h[i,j]*(1-cot(0.720283)*(@dx(h))), 0.0]
+    gvect=@SVector [h[i,j]*(1-cot(0.785398)*(@dx(h))), 0.0]
     #gvect=@SVector [h[i,j], 0.0]
 
   convdiv= @SVector [ϕx[i, j]*(@dx(ux))+ϕy[i, j]*(@dy(ux)), ϕx[i, j]*(@dx(uy))+ϕy[i, j]*(@dy(uy))] 
