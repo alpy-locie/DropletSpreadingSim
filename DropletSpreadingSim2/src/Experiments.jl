@@ -274,7 +274,7 @@ function DropletSpreadingExperiment(
     #g=9.8*sin(0.0872665)
     #g=9.8*sin(0.0698132)
     #g=9.8*sin(0.785398) # angle - 45
-    g=9.8*sin(0.261799) # angle - 45
+    g=9.8*sin(0.261799) # angle - 15
 )
     if L < 2h₀
         error("Domain length < 2h₀")
@@ -307,7 +307,7 @@ function DropletSpreadingExperiment(
     β = (3π)^2 / 4 # beta is an arbitary dimensionless variable
 @show(Re)
 @show((ρ * g *h₀^2/ σ))
-@show(((L/δ)*(1+aspect_ratio)))
+@show(((L/δ)^2*(1*aspect_ratio)))
 @show((μ*u₀/ σ))
 @show((N))
 @show((δ))
@@ -352,8 +352,11 @@ function DropletSpreadingExperiment(
     if ndrops == 1
         h = sum(drop.(R, 0, 0, θₛ, Ref(x), Ref(y))) .+ hi .+ hw
            @show(R[1])
-           volh= π * (R[1]^3) * (((1 - cos(θₛ))^2)/(sin(θₛ)^3))*(sin(θₛ)+cos(θₛ)-1)
+           volh= π * (R[1]^3) * (((1 - cos(θₛ))^2)/(sin(θₛ)^3))*(2+cos(θₛ))/3
            @show(volh)
+           @show(vol)
+           @show(R)
+           @show(Rmoy)
            @show(θₛ)
            @show(θₐ)
            @show(θᵣ)
