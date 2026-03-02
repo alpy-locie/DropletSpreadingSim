@@ -53,7 +53,7 @@ end
 parameters = Dict(
     :tmax => 120,
     :hₛ_ratio => 2.0,
-    :hₛ => [5e-2,3e-2,2e-2],
+    :hₛ => [5e-2],
     #:hₛ => 5e-2,
     :ndrops => 1,
     :hdrop_std => 0.2,
@@ -75,8 +75,8 @@ parameters = Dict(
     #:ρ => 1000.0,
     :ρ => 964,
     :τ => 0.0,
-    :L => 6,
-    :two_dim => false,
+    :L => 8,
+    :two_dim => true,
     :cfl_safety_factor => 0.9,
     :reproject => true,
 )
@@ -85,7 +85,7 @@ parameters = dict_list(parameters)
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/outputs/2-D/hs_Ratio=2_ls_0.002_α=15_θₛ=48"
+    out_dir = "data/outputs/3-D/corrected_volume1_α=15_θₛ=48"
     filename = savename(p, "nc", accesses=[:hₛ])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))

@@ -224,15 +224,24 @@ function init_model(x, y, h, p)
   # @show(h^2 * (1000 *9.8) / (0.001*2))
 #    uy = @. h * τy / 2
     #ux = ones(n₁, n₂)* 1000 *9.8 / 0.01
-    ux = zeros(n₁, n₂)
-    uy = zeros(n₁, n₂)
-    vx = zeros(n₁, n₂)
-    vy = zeros(n₁, n₂)
-    ϕx = zeros(n₁, n₂)
-    ϕy = zeros(n₁, n₂)
+    # ux = zeros(n₁, n₂)
+    # uy = zeros(n₁, n₂)
+    # vx = zeros(n₁, n₂)
+    # vy = zeros(n₁, n₂)
+    # ϕx = zeros(n₁, n₂)
+    # ϕy = zeros(n₁, n₂)
 
-    compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
-    compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls)
+    # compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
+    # compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls)
+    in_dir = "data/outputs/3-D/corrected_volume_α=15_θₛ=48/hₛ=0.05.nc"
+    ds = NCDataset(in_dir)
+     h = ds["h"][end,:,:]
+     ux = ds["ux"][end,:,:]
+     uy = ds["uy"][end,:,:]
+     vx = ds["vx"][end,:,:]
+     vy = ds["vy"][end,:,:]
+     ϕx = ds["ϕx"][end,:,:]
+     ϕy = ds["ϕy"][end,:,:]
     U₀ = zeros(nᵤ * n₁ * n₂)
     pack_Uvec!(U₀, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂)
 
