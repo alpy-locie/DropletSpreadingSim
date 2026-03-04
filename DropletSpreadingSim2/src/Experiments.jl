@@ -165,7 +165,8 @@ function build_cfl_limiter(exp::DropletSpreadingExperiment; kwargs...)
         dtmax = 0.0
         @floop ThreadedEx() for I in CartesianIndices((n₁, n₂))
             i, j = Tuple(I)
-            visc_vel = U[i, j, 2] / U[i, j, 1] + √(3U[i, j, 1]) * √(max(U[i, j, 6], 0))
+            #visc_vel = U[i, j, 2] / U[i, j, 1] + √(3U[i, j, 1]) * √(max(U[i, j, 6], 0))
+            visc_vel = U[i, j, 2] / U[i, j, 1] +  √(3/5) *(abs(U[i, j, 6] )) 
             dt = Δx / visc_vel
             @reduce() do (dtmax = 0; dt)
                 if isless(dtmax, dt)
@@ -219,7 +220,7 @@ function init_model(x, y, h, p)
     end
     gridinfo = (x=x, y=y, Δx=Δx, Δy=Δy, n₁=n₁, n₂=n₂)
 
-    @unpack κ, τx, τy, ls = p
+    @unpack κ, τx, τy, ls, hₛ = p
 
   # @show(h^2 * (1000 *9.8) / (0.001*2))
 #    uy = @. h * τy / 2
@@ -233,15 +234,19 @@ function init_model(x, y, h, p)
 
     # compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
     # compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls)
+    @show(hₛ)
+ 
     in_dir = "data/outputs/3-D/corrected_volume_α=15_θₛ=48/hₛ=0.05.nc"
-    ds = NCDataset(in_dir)
-     h = ds["h"][end,:,:]
-     ux = ds["ux"][end,:,:]
-     uy = ds["uy"][end,:,:]
-     vx = ds["vx"][end,:,:]
-     vy = ds["vy"][end,:,:]
-     ϕx = ds["ϕx"][end,:,:]
-     ϕy = ds["ϕy"][end,:,:]
+    ds1 = NCDataset(in_dir)
+    iter=ds1["t"][end]
+    @show(iter)
+     h = ds1["h"][end,:,:]
+     ux = ds1["ux"][end,:,:]
+     uy = ds1["uy"][end,:,:]
+     vx = ds1["vx"][end,:,:]
+     vy = ds1["vy"][end,:,:]
+     ϕx = ds1["ϕx"][end,:,:]
+     ϕy = ds1["ϕy"][end,:,:]
     U₀ = zeros(nᵤ * n₁ * n₂)
     pack_Uvec!(U₀, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂)
 
@@ -284,6 +289,7 @@ function DropletSpreadingExperiment(
     #g=9.8*sin(0.0698132)
     #g=9.8*sin(0.785398) # angle - 45
     g=9.8*sin(0.261799) # angle - 15
+    
 )
     if L < 2h₀
         error("Domain length < 2h₀")

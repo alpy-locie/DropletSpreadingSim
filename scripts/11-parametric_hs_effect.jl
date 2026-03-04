@@ -2,10 +2,15 @@
 using DropletSpreadingSim2
 
 using DifferentialEquations, Sundials, Logging, DrWatson
-using TerminalLoggers: TerminalLogger
+using TerminalLoggers: TerminalLogger 
+using NCDatasets
 global_logger(TerminalLogger(stderr))
 
 # %%
+    in_dir = "data/outputs/3-D/corrected_volume_α=15_θₛ=48/hₛ=0.05.nc"
+    ds1 = NCDataset(in_dir)
+    iter=ds1["t"][end]
+    @show(iter)
 function do_simulate(p; filename)
     @unpack h₀, ls, σ, ρ, μ, τ, θτ, L, hₛ, hₛ_ratio, θₛ, dθₛ, hₛ, aspect_ratio, tmax,
     mass, ndrops, hdrop_std, two_dim, reproject = p
@@ -17,7 +22,8 @@ function do_simulate(p; filename)
         aspect_ratio, mass, ndrops, hdrop_std, two_dim)
 
     # %%
-    prob = ODEProblem(experiment, (0.0, p[:tmax]))
+
+    prob = ODEProblem(experiment, (iter, (p[:tmax]+iter)))
     # cfl_limiter = build_cfl_limiter(experiment; safety_factor=p[:cfl_safety_factor])
     callbacks = Any[]
     if ~isnothing(filename)
@@ -51,7 +57,7 @@ end
 #SSPRK432();
 # %%
 parameters = Dict(
-    :tmax => 120,
+    :tmax => 0,
     :hₛ_ratio => 2.0,
     :hₛ => [5e-2],
     #:hₛ => 5e-2,
@@ -83,16 +89,22 @@ parameters = Dict(
 parameters = dict_list(parameters)
 
 # %%
+    # in_dir = "data/outputs/3-D/corrected_volume_α=15_θₛ=48/hₛ=0.05.nc"
+    # ds1 = NCDataset(in_dir)
+    # iter=ds1["t"][end]
+    @show(iter)
 for p ∈ parameters
-    #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/outputs/3-D/corrected_volume1_α=15_θₛ=48"
-    filename = savename(p, "nc", accesses=[:hₛ])
-    #filename = savename(params, "nc")
+    #params = (accesses=[:hₛ], accesses=[:tmax])
+    params= Dict(:t => p[:tmax]+iter)
+    @show(p[:tmax]+iter)
+    out_dir = "data/outputs/3-D/corrected_volume_α=15_θₛ=48/hₛ=0.05"
+    #filename = savename(p, "nc", tnew)
+    filename = savename(params,"nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename
         continue
     end
-    # remove filename if it exists
+     #remove filename if it exists
     if ~isnothing(filename) && isfile(filename)
         rm(filename)
     end
