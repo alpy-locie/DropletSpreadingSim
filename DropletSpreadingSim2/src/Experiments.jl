@@ -165,7 +165,7 @@ function build_cfl_limiter(exp::DropletSpreadingExperiment; kwargs...)
         dtmax = 0.0
         @floop ThreadedEx() for I in CartesianIndices((n₁, n₂))
             i, j = Tuple(I)
-            visc_vel = U[i, j, 2] / U[i, j, 1] + √(3U[i, j, 1]) * √(max(U[i, j, 6], 0))
+            visc_vel = U[i, j, 2] / U[i, j, 1] + √((3/5)*U[i, j, 1]) * (abs(U[i, j, 6]))
             dt = Δx / visc_vel
             @reduce() do (dtmax = 0; dt)
                 if isless(dtmax, dt)
@@ -231,8 +231,8 @@ function init_model(x, y, h, p)
     ϕx = zeros(n₁, n₂)
     ϕy = zeros(n₁, n₂)
 
-    compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
-    compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls)
+    #compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
+    #compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls)
     U₀ = zeros(nᵤ * n₁ * n₂)
     pack_Uvec!(U₀, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂)
 
@@ -315,8 +315,11 @@ function DropletSpreadingExperiment(
     τx = cos(θτ)
     τy = sin(θτ)
     # attention ! A cause de la peridocité, il ne faut pas le dernier point du domaine
-    x = range(-L / 2, L * (aspect_ratio - 1 / 2) - δ, step=δ)
-
+    #x = range(-L / 2, L * (aspect_ratio - 1 / 2) - δ, step=δ)
+    x = range(0, L * (aspect_ratio ) - δ, step=δ)
+    sinx = [sin(2*pi*i/(L * (aspect_ratio ))) for i in 0:δ:( L * (aspect_ratio ) - δ)]
+    #sinx = range(sin(-L / 2), sin(L * (aspect_ratio - 1 / 2) - δ), step=sin(δ))
+    @show(sinx)
     if two_dim
         y = range(-L / 2, L / 2 - δ, step=δ)
     else
@@ -350,17 +353,9 @@ function DropletSpreadingExperiment(
     end
 
     if ndrops == 1
-        h = sum(drop.(R, 0, 0, θₛ, Ref(x), Ref(y))) .+ hi .+ hw
-           @show(R[1])
-           volh= π * (R[1]^3) * (((1 - cos(θₛ))^2)/(sin(θₛ)^3))*(2+cos(θₛ))/3
-           @show(volh)
-           @show(vol)
-           @show(R)
-           @show(Rmoy)
-           @show(θₛ)
-           @show(θₐ)
-           @show(θᵣ)
-           @show((ρ * g *(h₀^2) * (volh^(2/3))/ σ))
+        @show(hi .+ hw)
+        h = ones(n₁)*( hi .+ hw)+ ( hi .+ hw)*0.1*sinx
+           #@show((ρ * g *(h₀^2) * (volh^(2/3))/ σ))
     else
         d_posx = Uniform(xmin + Rmoy, xmax - Rmoy)
         if two_dim
@@ -368,9 +363,7 @@ function DropletSpreadingExperiment(
         else
             d_posy = 0
         end
-        h =
-            sum(drop.(R, rand(d_posx, ndrops), rand(d_posy, ndrops), θₛ, Ref(x), Ref(y))) .+
-            hi .+ hw
+        h = hi .+ hw
     end
     if smooth > 0
         h = imfilter(h, Kernel.gaussian(smooth))

@@ -64,6 +64,19 @@ function compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls; executor=ThreadedEx()) #
     end
 end
 
+function compute_h!(h, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
+    h = h[i, j]
+    return
+end
+
+
+function compute_h!(h; executor=ThreadedEx()) #Evaluating ϕ
+    @floop executor for I in CartesianIndices(h)
+        compute_ϕ!(h, Tuple(I)...)
+    end
+end
+
+
 function build_cache_hyp(T, n₁, n₂)#initialising arrays
     x = T()
     @preallocate U, Fx, Fy = similar(x, (n₁, n₂, nᵤ))

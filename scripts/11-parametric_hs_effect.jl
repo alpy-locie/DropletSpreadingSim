@@ -52,8 +52,8 @@ end
 # %%
 parameters = Dict(
     :tmax => 120,
-    :hₛ_ratio => 2.0,
-    :hₛ => [5e-2,3e-2,2e-2],
+    :hₛ_ratio => 50.0,
+    :hₛ => [4,3,2,1],
     #:hₛ => 5e-2,
     :ndrops => 1,
     :hdrop_std => 0.2,
@@ -67,7 +67,7 @@ parameters = Dict(
     :θₛ => 48,
     #:θₛ => [15,30,45,60,75],
     :dθₛ => 2.5,
-    :save_timestep => 10,
+    :save_timestep => 1,
     :θτ => 0.0,
     #:mass => 12.95,
     :mass => 6,
@@ -85,7 +85,7 @@ parameters = dict_list(parameters)
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/outputs/2-D/hs_Ratio=2_ls_0.002_α=15_θₛ=48"
+    out_dir = "data/fallingfilms/2-D/Periodic"
     filename = savename(p, "nc", accesses=[:hₛ])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
