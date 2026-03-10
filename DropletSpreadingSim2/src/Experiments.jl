@@ -141,8 +141,12 @@ function build_reprojection_callback(
         @unpack h, ux, uy, vx, vy, ϕx, ϕy = exp.caches[typeof(Uvec)].cap
         vx_new = copy(vx)
         vy_new = copy(vy)
-        @unpack κ = exp.p
+        @unpack κ, hₛ = exp.p
+	h₀=0.001
+	u₀ = (1067.7 *1.0924* h₀^2) / 0.00669445
         unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, Uvec, n₁, n₂; executor)
+        t=integrator.t
+        compute_h!(t, h, hₛ, h₀, u₀; executor)
         compute_v!(vx_new, vy_new, h, κ, Δx, Δy, n₁, n₂; executor)
         if isnothing(thresh) || (
             (norm(vx - vx_new) / norm(vx) > thresh) ||
@@ -249,7 +253,7 @@ end
 function DropletSpreadingExperiment(
     hi=[],
     ;
-    h₀,
+    h₀=nothing,
     σ,
     ρ,
     μ,
@@ -269,12 +273,12 @@ function DropletSpreadingExperiment(
     holdup=0.02,
     mass=nothing,
     smooth=false,
-    #g=9.8*sin(0.15708)
-    #g=9.8*sin(0.331613)
+    #g=9.8
+    g=9.8*sin(0.111701)
     #g=9.8*sin(0.0872665)
     #g=9.8*sin(0.0698132)
     #g=9.8*sin(0.785398) # angle - 45
-    g=9.8*sin(0.261799) # angle - 15
+   # g=9.8*sin(0.261799) # angle - 15
 )
     if L < 2h₀
         error("Domain length < 2h₀")
@@ -307,6 +311,7 @@ function DropletSpreadingExperiment(
     β = (3π)^2 / 4 # beta is an arbitary dimensionless variable
 @show(Re)
 @show((ρ * g *h₀^2/ σ))
+@show(1/κ)
 @show(((L/δ)^2*(1*aspect_ratio)))
 @show((μ*u₀/ σ))
 @show((N))
@@ -317,9 +322,9 @@ function DropletSpreadingExperiment(
     # attention ! A cause de la peridocité, il ne faut pas le dernier point du domaine
     #x = range(-L / 2, L * (aspect_ratio - 1 / 2) - δ, step=δ)
     x = range(0, L * (aspect_ratio ) - δ, step=δ)
-    sinx = [sin(2*pi*i/(L * (aspect_ratio ))) for i in 0:δ:( L * (aspect_ratio ) - δ)]
+    #sinx = [sin(2*pi*i/(L * (aspect_ratio ))) for i in 0:δ:( L * (aspect_ratio ) - δ)]
     #sinx = range(sin(-L / 2), sin(L * (aspect_ratio - 1 / 2) - δ), step=sin(δ))
-    @show(sinx)
+    #@show(sinx)
     if two_dim
         y = range(-L / 2, L / 2 - δ, step=δ)
     else
@@ -354,7 +359,7 @@ function DropletSpreadingExperiment(
 
     if ndrops == 1
         @show(hi .+ hw)
-        h = ones(n₁)*( hi .+ hw)+ ( hi .+ hw)*0.1*sinx
+        h = ones(n₁)*( hi .+ hw)#+ ( hi .+ hw)*0.1*sinx
            #@show((ρ * g *(h₀^2) * (volh^(2/3))/ σ))
     else
         d_posx = Uniform(xmin + Rmoy, xmax - Rmoy)

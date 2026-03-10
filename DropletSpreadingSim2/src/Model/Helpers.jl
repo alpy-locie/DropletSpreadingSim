@@ -79,14 +79,14 @@ julia> @bc h (h[i - 1, j] + h[i + 1, j]) / Δx
 ```
 will lead to (h[bc(i - 1), j] + h[bc(i + 1), j]) / Δx
 """
-const bc_type= :periodic
+const bc_type= :inlet
 macro bc(var, expr)
     #bound_ij(i, j) = :(mod1($i, n₁)), :(mod1($j, n₂)) 
     function bound_ij(i, j; bc_type=:periodic, inlet_val=nothing, outlet_val=nothing)
     if bc_type == :periodic
-        return :(mod1($i, n₁)), :(mod1($j, n₂))
+        return :(clamp($i, 1, n₁)), :(clamp($j, 1, n₂))
     elseif bc_type == :inlet
-        return :(clamp($i, 1, n₁)), :(mod1($j, n₂))   # i=1 is inlet
+        return :(clamp($i, 1, n₁)), :(clamp($j, 1, n₂))   # i=1 is inlet
     elseif bc_type == :outlet
         return :(clamp($i, 1, n₁)), :(mod1($j, n₂))  # i=n₁ is outlet
     else
@@ -97,16 +97,16 @@ macro bc(var, expr)
         ex = postwalk(ex) do x
             @capture(x, $var[i_, j_]) || return x
             i, j = bound_ij(i, j)
-            #return :($var[$i, $j])
-                if bc_type == :inlet && inlet_val !== nothing
-                val_expr = isa(inlet_val, Function) ? :( $inlet_val(t) ) : :( $inlet_val )
-                return :($var[$i, $j] = $val_expr)
-                elseif bc_type == :outlet && outlet_val !== nothing
-                val_expr = isa(outlet_val, Function) ? :( $outlet_val(t) ) : :( $outlet_val )
-                return :($var[$i, $j] = $val_expr)
-                else
-                return :($var[$i, $j])
-                end
+            return :($var[$i, $j])
+            #     if bc_type == :inlet && inlet_val !== nothing
+            #     val_expr = isa(inlet_val, Function) ? :( $inlet_val(t) ) : :( $inlet_val )
+            #     return :($var[$i, $j] = $val_expr)
+            #     elseif bc_type == :outlet && outlet_val !== nothing
+            #     val_expr = isa(outlet_val, Function) ? :( $outlet_val(t) ) : :( $outlet_val )
+            #     return :($var[$i, $j] = $val_expr)
+            #     else
+            #     return :($var[$i, $j])
+            #     end
             end
         ex = postwalk(ex) do x
             @capture(x, $var[i_, j_, k_]) || return x
