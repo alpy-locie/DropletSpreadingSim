@@ -23,8 +23,8 @@ include("./NonConservative.jl")
 
 @static if MODE == :full
     function compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂, i, j)# definition of w= (√2κ/√h)(√(1+||∇h||^2)+1)^(-1/2) ∇h
-        vx[i, j] = √κ * √(2.0 / (1.0 + √(1.0 + (@dx(h))^2 + (@dy(h))^2))) * (@dx(h)) / √max(h[i, j], 0.0)
-        vy[i, j] = √κ * √(2.0 / (1.0 + √(1.0 + (@dx(h))^2 + (@dy(h))^2))) * (@dy(h)) / √max(h[i, j], 0.0)
+         vx[i, j] = √κ * √(2.0 / (1.0 + √(1.0 + (@dx(h))^2 + (@dy(h))^2))) * (@dx(h)) / √max(h[i, j], 0.0)
+         vy[i, j] = √κ * √(2.0 / (1.0 + √(1.0 + (@dx(h))^2 + (@dy(h))^2))) * (@dy(h)) / √max(h[i, j], 0.0)
         return
     end
 elseif MODE == :simple
@@ -45,12 +45,12 @@ function compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂; executor=ThreadedEx())#
     end
 end
 
-function compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
+function compute_ϕ!(h, ux, uy, ϕx, ϕy, ls, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
     u = @SVector [ux[i, j], uy[i, j]]
-    τ = @SVector [0.0, 0.0]
+    #τ = @SVector [0.0, 0.0]
 #    ϕ = (u ⊗ u) / 3h[i, j]^2 - 1 / 12h[i, j]^2 * ((u ⊗ u) - h[i, j]^2 * (τ ⊗ τ) / 4)
     #ϕ = (τ ⊗ τ) 
-    ϕ = (u ⊗ u)/(5*(3*ls+h[i, j])^2)
+    #ϕ = (u ⊗ u)/(5*(3*ls+h[i, j])^2)
     #ϕ1 = @SVector [ϕx[i, j], ϕy[i, j]]
     #ϕx[i, j] = √(5*ϕ[1, 1])
     #ϕy[i, j] = √(5*ϕ[2, 2])
@@ -58,21 +58,49 @@ function compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls, i, j) # definition of ϕ
 end
 
 
-function compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls; executor=ThreadedEx()) #Evaluating ϕ
+function compute_ϕ!(h, ux, uy, ϕx, ϕy, ls; executor=ThreadedEx()) #Evaluating ϕ
     @floop executor for I in CartesianIndices(h)
-        compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls, Tuple(I)...)
+        compute_ϕ!(h, ux, uy, ϕx, ϕy, ls, Tuple(I)...)
     end
 end
 
-function compute_h!(t, h, hₛ, h₀, u₀, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
-	#h[1,j]=hₛ*(1+0.05*sin(t*(h₀/u₀)*pi*2*16))
-    h[1,j]=hₛ*(1+0.05*sin(t*(h₀/u₀)*pi*2*4.5))
+function compute_h!(t, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
+    #ux[1,j] = ((((hₛ)^2)/3)+ls*(hₛ))*(1-0.0002*t)
+    h[i,n₂]=hₛ
+    h[i,1]=hₛ
+
+    for j in 1:n₂
+        #ux[1,j] = ((((h[1,j])^2)/3)+ls*(h[1,j]))*(1-0.0002*t)*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*4
+        #ϕx[1,j] = ux[1,j]/(3*ls+(h[1,j]))
+        #ux[1,j] = ((((hₛ)^2)/3)+ls*(hₛ))*(1-0.0002*t)*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*2
+	ux[1,j] = ((((hₛ)^2)/3)+ls*(hₛ))*(0.75+(1-0.75)*exp(-5*t/tmax))*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*2
+        ϕx[1,j] = ux[1,j]/(3*ls+(hₛ))
+    end
+         #*0.549723 *0
+    #for i in 1:n₁
+    #for j in 1:n₂
+	#ux[i,j] = ((((h[i,j])^2)/3)+ls*(h[i,j]))*(2/3)
+        #ϕx[i,j] = ux[i,j]/(3*ls+(h[i,j]))
+    #end
+    #end
+    ux[i,1]=0
+    ux[i,n₂]=0
+    uy[i,1]=0
+    uy[i,n₂]=0
+    ϕx[i,1]=0
+    ϕx[i,n₂]=0
+    ϕy[i,1]=0
+    ϕy[i,n₂]=0
+    vx[i,1]=0
+    vx[i,n₂]=0
+    #h[1,j]=sqrt(3*ux[1,j])
+    #h[1,j]=hₛ*(1+0.05*sin(t*(h₀/u₀)*pi*2*f))
     return
 end
 
-function compute_h!(t, h, hₛ, h₀, u₀; executor=ThreadedEx()) #Evaluating ϕ
+function compute_h!(t, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax; executor=ThreadedEx()) #Evaluating ϕ
     @floop executor for I in CartesianIndices(h)
-        compute_h!(t, h, hₛ, h₀, u₀, Tuple(I)...)
+        compute_h!(t, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax, Tuple(I)...)
     end
 end
 

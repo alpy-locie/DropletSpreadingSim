@@ -141,13 +141,13 @@ function build_reprojection_callback(
         @unpack h, ux, uy, vx, vy, ϕx, ϕy = exp.caches[typeof(Uvec)].cap
         vx_new = copy(vx)
         vy_new = copy(vy)
-        @unpack κ, hₛ = exp.p
-	h₀=0.001
-	u₀ = (1067.7 *1.0924* h₀^2) / 0.00669445
+        @unpack κ, hₛ, α, f, h₀, μ, ρ, g, f, ls, tmax = exp.p
+	    #h₀=0.001
+	    u₀ = (ρ *g* h₀^2) / μ
         unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, Uvec, n₁, n₂; executor)
         t=integrator.t
-        compute_h!(t, h, hₛ, h₀, u₀; executor)
         compute_v!(vx_new, vy_new, h, κ, Δx, Δy, n₁, n₂; executor)
+        compute_h!(t, h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax; executor)
         if isnothing(thresh) || (
             (norm(vx - vx_new) / norm(vx) > thresh) ||
             (norm(vy - vy_new) / norm(vy) > thresh)
@@ -223,19 +223,30 @@ function init_model(x, y, h, p)
     end
     gridinfo = (x=x, y=y, Δx=Δx, Δy=Δy, n₁=n₁, n₂=n₂)
 
-    @unpack κ, τx, τy, ls = p
+    @unpack κ, τx, τy, ls, hₛ, h₀, μ, ρ, g, f, ls  = p
 
-  # @show(h^2 * (1000 *9.8) / (0.001*2))
-#    uy = @. h * τy / 2
-    #ux = ones(n₁, n₂)* 1000 *9.8 / 0.01
+#    uy = @. h * τy / 2 
+    #ux = ones(n₁, n₂)* ((((hₛ)^2)/3)+ls*(hₛ))#*0.549723 *0
     ux = zeros(n₁, n₂)
+    ϕx = zeros(n₁, n₂)
+     #*0.549723 *0
+    for i in 1:n₁
+    for j in 1:n₂
+	ux[i,j] = ((((h[i,j])^2)/3)+ls*(h[i,j]))*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*2
+    ϕx[i,j] = ux[i,j]/(3*ls+(h[i,j]))
+    end
+    end
     uy = zeros(n₁, n₂)
     vx = zeros(n₁, n₂)
     vy = zeros(n₁, n₂)
-    ϕx = zeros(n₁, n₂)
+    #ϕx = zeros(n₁, n₂)
     ϕy = zeros(n₁, n₂)
+    #ux[:,1]=zeros(n₁)
+    #ux[:,n₂]=zeros(n₁)
+    #ϕx[:,1]=zeros(n₁)
+    #ϕx[:,n₂]=zeros(n₁)
 
-    #compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
+    compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
     #compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls)
     U₀ = zeros(nᵤ * n₁ * n₂)
     pack_Uvec!(U₀, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂)
@@ -253,6 +264,7 @@ end
 function DropletSpreadingExperiment(
     hi=[],
     ;
+    tmax,
     h₀=nothing,
     σ,
     ρ,
@@ -260,6 +272,8 @@ function DropletSpreadingExperiment(
     τ,
     θτ,
     L,
+    α,
+    f,
     θₐ=50.5,
     θᵣ=45.5,
     N=nothing,
@@ -274,10 +288,10 @@ function DropletSpreadingExperiment(
     mass=nothing,
     smooth=false,
     #g=9.8
-    g=9.8*sin(0.111701)
+    g=9.8*sin(α*pi/180)
     #g=9.8*sin(0.0872665)
     #g=9.8*sin(0.0698132)
-    #g=9.8*sin(0.785398) # angle - 45
+    #g=/Documents/Julia/Fallingfilmdata/2-D/Zeroflux9.8*sin(0.785398) # angle - 45
    # g=9.8*sin(0.261799) # angle - 15
 )
     if L < 2h₀
@@ -310,6 +324,7 @@ function DropletSpreadingExperiment(
     κ = σ / (ρ * h₀ * u₀^2) #1/We
     β = (3π)^2 / 4 # beta is an arbitary dimensionless variable
 @show(Re)
+@show(g)
 @show((ρ * g *h₀^2/ σ))
 @show(1/κ)
 @show(((L/δ)^2*(1*aspect_ratio)))
@@ -322,9 +337,10 @@ function DropletSpreadingExperiment(
     # attention ! A cause de la peridocité, il ne faut pas le dernier point du domaine
     #x = range(-L / 2, L * (aspect_ratio - 1 / 2) - δ, step=δ)
     x = range(0, L * (aspect_ratio ) - δ, step=δ)
-    #sinx = [sin(2*pi*i/(L * (aspect_ratio ))) for i in 0:δ:( L * (aspect_ratio ) - δ)]
-    #sinx = range(sin(-L / 2), sin(L * (aspect_ratio - 1 / 2) - δ), step=sin(δ))
+    #sinx = [sin(2*pi*j/(L)) for i in 0:δ:( L * (aspect_ratio ) - δ)]
+    #siny = range(sin(-L / 2), sin(L * (1 - 1 / 2) - δ), step=δ)
     #@show(sinx)
+
     if two_dim
         y = range(-L / 2, L / 2 - δ, step=δ)
     else
@@ -333,8 +349,13 @@ function DropletSpreadingExperiment(
 
     n₁, n₂ = length.([x, y])
     Δx = Δy = δ
-
-    p = (Re=Re, κ=κ, ls=ls, β=β, τx=τx, τy=τy, hₛ=hₛ, θₐ=θₐ, θᵣ=θᵣ)
+    siny = ones(n₁,n₂)
+    for i in 1:n₁
+    for j in 1:n₂
+        siny[i,j] = sin(pi*(j-1)/(n₂-1)) 
+    end
+    end
+    p = (Re=Re, κ=κ, ls=ls, β=β, τx=τx, τy=τy, hₛ=hₛ, θₐ=θₐ, θᵣ=θᵣ, f=f, μ=μ, ρ=ρ, α=α, h₀=h₀, g=g, tmax=tmax)
 
     if isempty(hi)
         hi = hₛ
@@ -359,7 +380,7 @@ function DropletSpreadingExperiment(
 
     if ndrops == 1
         @show(hi .+ hw)
-        h = ones(n₁)*( hi .+ hw)#+ ( hi .+ hw)*0.1*sinx
+        h = ones(n₁,n₂)*(( hi))#- (hi)*0.01*siny
            #@show((ρ * g *(h₀^2) * (volh^(2/3))/ σ))
     else
         d_posx = Uniform(xmin + Rmoy, xmax - Rmoy)

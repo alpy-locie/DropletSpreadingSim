@@ -7,13 +7,13 @@ global_logger(TerminalLogger(stderr))
 
 # %%
 function do_simulate(p; filename)
-    @unpack h₀, ls, σ, ρ, μ, τ, θτ, L, hₛ, hₛ_ratio, θₛ, dθₛ, hₛ, aspect_ratio, tmax,
+    @unpack h₀, ls, σ, ρ, μ, τ, θτ, L, hₛ, hₛ_ratio, θₛ, dθₛ, hₛ, aspect_ratio, tmax, α, f,
     mass, ndrops, hdrop_std, two_dim, reproject = p
     θₐ = deg2rad(θₛ + dθₛ)
     θᵣ = deg2rad(θₛ - dθₛ)
 
     # %%
-    experiment = DropletSpreadingExperiment(; h₀, ls, σ, ρ, μ, τ, θτ, L, hₛ_ratio, hₛ, θₐ, θᵣ,
+    experiment = DropletSpreadingExperiment(; tmax, h₀, ls, σ, ρ, μ, τ, θτ, L, hₛ_ratio, hₛ, θₐ, θᵣ, α, f,
         aspect_ratio, mass, ndrops, hdrop_std, two_dim)
 
     # %%
@@ -51,35 +51,39 @@ end
 #SSPRK432();
 # %%
 parameters = Dict(
-    :tmax => 500,
-    :hₛ_ratio => 60.0,
-    #:hₛ => [0.291874],
-    :hₛ => 1.27726,
+    :tmax => 800,
+    :hₛ_ratio => 120.0,
+    #:hₛ => 0.334112,
+    #:hₛ => 1.27726,
     :ndrops => 1,
+    :hₛ => 1,
     :hdrop_std => 0.2,
     :h₀ => 0.001,
     :ls => 0.001,
     #:ls => [2e-2,1e-2,5e-3,2e-3,1e-3,5e-4,2e-4],
-    #:μ => 0.00285,
-     :μ => 0.00669445,
-    #:μ => 0.01,
+    #:μ => 0.00313015,
+    #:μ => 0.00669445,
+    :μ => 0.001,
     #:σ => 0.075,
     #:σ => 0.0484,
-    :σ => 0.067,
+    #:σ => 0.067,
+    :σ => 0.074,
     :θₛ => 48,
-    #:θₛ => [15,30,45,60,75],
+    #:α => 6.4,
+    :α => 90,
+    :f => 0,
     :dθₛ => 2.5,
     :save_timestep => 10,
     :θτ => 0.0,
     #:mass => 12.95,
     :mass => 6,
-    :aspect_ratio => 25,
-    #:ρ => 1000.0,
+    :aspect_ratio => 5/2,
+    :ρ => 1000,
     #:ρ => 1098.3,
-    :ρ => 1067.7,
+    #:ρ => 1067.7,
     :τ => 0.0,
-    :L => 10,
-    :two_dim => false,
+    :L => 4,
+    :two_dim => true,
     :cfl_safety_factor => 0.9,
     :reproject => true,
 )
@@ -88,8 +92,8 @@ parameters = dict_list(parameters)
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/fallingfilms/2-D/Periodic"
-    filename = savename(p, "nc", accesses=[:hₛ])
+    out_dir = "data/fallingfilms/3-D/Florineexperiments_0.75"
+    filename = savename(p, "nc", accesses=[:hₛ_ratio])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename
