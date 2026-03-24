@@ -141,13 +141,14 @@ function build_reprojection_callback(
         @unpack h, ux, uy, vx, vy, ϕx, ϕy = exp.caches[typeof(Uvec)].cap
         vx_new = copy(vx)
         vy_new = copy(vy)
-        @unpack κ, hₛ, α, f, h₀, μ, ρ, g, f, ls, tmax = exp.p
+        @unpack κ, hₛ, α, f, h₀, μ, ρ, g, f, ls, tmax, mass = exp.p
 	    #h₀=0.001
 	    u₀ = (ρ *g* h₀^2) / μ
         unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, Uvec, n₁, n₂; executor)
         t=integrator.t
+        compute_inlet!(t, h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax, mass; executor)
         compute_v!(vx_new, vy_new, h, κ, Δx, Δy, n₁, n₂; executor)
-        compute_h!(t, h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax; executor)
+        compute_sidewalls!(t, h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax; executor)
         if isnothing(thresh) || (
             (norm(vx - vx_new) / norm(vx) > thresh) ||
             (norm(vy - vy_new) / norm(vy) > thresh)
@@ -223,7 +224,7 @@ function init_model(x, y, h, p)
     end
     gridinfo = (x=x, y=y, Δx=Δx, Δy=Δy, n₁=n₁, n₂=n₂)
 
-    @unpack κ, τx, τy, ls, hₛ, h₀, μ, ρ, g, f, ls  = p
+    @unpack κ, τx, τy, ls, hₛ, h₀, μ, ρ, g, f, ls, mass  = p
 
 #    uy = @. h * τy / 2 
     #ux = ones(n₁, n₂)* ((((hₛ)^2)/3)+ls*(hₛ))#*0.549723 *0
@@ -232,7 +233,8 @@ function init_model(x, y, h, p)
      #*0.549723 *0
     for i in 1:n₁
     for j in 1:n₂
-	ux[i,j] = ((((h[i,j])^2)/3)+ls*(h[i,j]))*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*2
+	#ux[i,j] = ((((h[i,j])^2)/3)+ls*(h[i,j]))*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*2
+    ux[i,j] = mass*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*6
     ϕx[i,j] = ux[i,j]/(3*ls+(h[i,j]))
     end
     end
@@ -355,7 +357,7 @@ function DropletSpreadingExperiment(
         siny[i,j] = sin(pi*(j-1)/(n₂-1)) 
     end
     end
-    p = (Re=Re, κ=κ, ls=ls, β=β, τx=τx, τy=τy, hₛ=hₛ, θₐ=θₐ, θᵣ=θᵣ, f=f, μ=μ, ρ=ρ, α=α, h₀=h₀, g=g, tmax=tmax)
+    p = (Re=Re, κ=κ, ls=ls, β=β, τx=τx, τy=τy, hₛ=hₛ, θₐ=θₐ, θᵣ=θᵣ, f=f, μ=μ, ρ=ρ, α=α, h₀=h₀, g=g, tmax=tmax, mass=mass)
 
     if isempty(hi)
         hi = hₛ
