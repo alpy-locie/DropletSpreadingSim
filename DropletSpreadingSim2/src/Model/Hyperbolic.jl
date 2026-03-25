@@ -9,7 +9,7 @@ using ..Model: MODE, nᵤ
 
 @inline minmod(x, y) = 0.5 * (sign(x) + sign(y)) * min(abs(x), abs(y)) #discritisation for second order
 
-@bc U function update_bounds_x!(Uw₋, Uw₊, Ue₋, Ue₊, U, n₁, n₂, Δx, Δy, i, j, k; order=2) #discretisation scheme along x
+@bc U function update_bounds_x!(Uw₋, Uw₊, Ue₋, Ue₊, U, n₁, n₂, Δx, Δy, i, j, k; order=1) #discretisation scheme along x
     if order == 2
         ∇Ui = minmod((U[i, j, k] - U[i-1, j, k]) / Δx, (U[i+1, j, k] - U[i, j, k]) / Δx)
         ∇Ue = minmod((U[i+1, j, k] - U[i, j, k]) / Δx, (U[i+2, j, k] - U[i+1, j, k]) / Δx)
@@ -27,7 +27,7 @@ using ..Model: MODE, nᵤ
     return
 end
 
-@bc U function update_bounds_y!(Us₋, Us₊, Un₋, Un₊, U, n₁, n₂, Δx, Δy, i, j, k; order=2) #discretisation scheme along y
+@bc U function update_bounds_y!(Us₋, Us₊, Un₋, Un₊, U, n₁, n₂, Δx, Δy, i, j, k; order=1) #discretisation scheme along y
     if order == 2
         ∇Ui = minmod((U[i, j, k] - U[i, j-1, k]) / Δy, (U[i, j+1, k] - U[i, j, k]) / Δy)
         ∇Un = minmod((U[i, j+1, k] - U[i, j, k]) / Δy, (U[i, j+2, k] - U[i, j+1, k]) / Δy)

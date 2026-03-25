@@ -4,7 +4,7 @@ using SparseArrays, StaticArrays, LinearAlgebra, UnPack, Reexport, FLoops
 using UnPack
 
 const nᵤ = 7
-const MODE = :full # type of augumented formulations
+const MODE = :simple # type of augumented formulations
 # const MODE = :simple
 # const MODE = nothing
 
