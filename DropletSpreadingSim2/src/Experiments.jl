@@ -274,7 +274,7 @@ function DropletSpreadingExperiment(
     #g=9.8*sin(0.0872665)
     #g=9.8*sin(0.0698132)
     #g=9.8*sin(0.785398) # angle - 45
-    g=9.8*sin(0.261799) # angle - 15
+    g=9.8*sin(0.0872665) # angle - 15
 )
     if L < 2h₀
         error("Domain length < 2h₀")

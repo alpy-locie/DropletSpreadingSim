@@ -105,13 +105,13 @@ function skew_cap_kernel!(
     v = @SVector [vx[i, j], vy[i, j]]# Vector for W
     τ = @SVector [0.0, 0.0]            # Vector for τe
     dh= @SVector [(@dx(h)), (@dy(h))]# gradient of h
-    gvect=@SVector [h[i,j]*(1-cot(0.261799)*(@dx(h))), 0.0]
+    gvect=@SVector [h[i,j]*(1-cot(0.0872665)*(@dx(h))), 0.0]
     #gvect=@SVector [h[i,j], 0.0]
 
   convdiv= @SVector [ϕx[i, j]*(@dx(ux))+ϕy[i, j]*(@dy(ux)), ϕx[i, j]*(@dx(uy))+ϕy[i, j]*(@dy(uy))] 
 
  #   dhu = -(@∇(gv)) + (@divh∇t(fvx, fvy)) + 3 / Re * (τ / 2 - u / h[i, j]) + h[i, j] * (@∇(Pid))# momentum balance
-   dhuk = (-(@∇(gv)) + (@divh∇t(fvx, fvy))  + h[i, j] * (@∇(Pid))+gvect/Re)-(u-h[i,j]*ϕ1)/(ls*Re)# momentum balance # divh∇ is now divh∇t
+   dhuk = (-(@∇(gv)) + (@divh∇t(fvx, fvy))  + h[i, j] * (@∇(Pid)+gvect/Re)-(u-h[i,j]*ϕ1)/(ls*Re)# momentum balance # divh∇ is now divh∇t
    dhu2=(@divh∇(ux,uy))+(@divh∇t(ux,uy)) + 2 * ((@div(ux,uy))*(@∇(h))+ h[i,j]*(@∇div(ux,uy))) 
    + (h[i,j]*(@∇(h))*(@div(ϕx, ϕy))+((h[i,j]^2)/2)*(@∇div(ϕx, ϕy)))
    - ((1/2)*((@∇(h))*(@∇(h))'+ h[i,j]*(@∇∇(h)))*ϕ1) 
