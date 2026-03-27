@@ -146,7 +146,7 @@ function build_reprojection_callback(
 	    u₀ = (ρ *g* h₀^2) / μ
         unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, Uvec, n₁, n₂; executor)
         t=integrator.t
-        compute_inlet!(t, h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax, mass; executor)
+        compute_inlet!(t, h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax, mass; executor) 
         compute_v!(vx_new, vy_new, h, κ, Δx, Δy, n₁, n₂; executor)
         compute_sidewalls!(t, h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax; executor)
         if isnothing(thresh) || (
@@ -234,7 +234,8 @@ function init_model(x, y, h, p)
     for i in 1:n₁
     for j in 1:n₂
 	#ux[i,j] = ((((h[i,j])^2)/3)+ls*(h[i,j]))*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*2
-    ux[i,j] = mass*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*6
+    #ux[i,j] = mass*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*6/hₛ
+    ux[i,j] = mass/hₛ
     ϕx[i,j] = ux[i,j]/(3*ls+(h[i,j]))
     end
     end
@@ -382,7 +383,7 @@ function DropletSpreadingExperiment(
 
     if ndrops == 1
         @show(hi .+ hw)
-        h = ones(n₁,n₂)*(( hi))#- (hi)*0.01*siny
+        h = ones(n₁,n₂)*(( hi))- (hi)*0.001*siny
            #@show((ρ * g *(h₀^2) * (volh^(2/3))/ σ))
     else
         d_posx = Uniform(xmin + Rmoy, xmax - Rmoy)

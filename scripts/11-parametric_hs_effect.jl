@@ -52,7 +52,7 @@ end
 # %%
 parameters = Dict(
     :tmax => 1000,
-    :hₛ_ratio => 50.0,
+    :hₛ_ratio => [75,100,125,150],
     #:hₛ => 0.334112,
     #:hₛ => 1.27726,
     :ndrops => 1,
@@ -63,7 +63,7 @@ parameters = Dict(
     #:ls => [2e-2,1e-2,5e-3,2e-3,1e-3,5e-4,2e-4],
     #:μ => 0.00313015,
     #:μ => 0.00669445,
-    :μ => 0.001,
+    :μ => 0.0014,
     #:σ => 0.075,
     #:σ => 0.0484,
     #:σ => 0.067,
@@ -76,10 +76,10 @@ parameters = Dict(
     :save_timestep => 10,
     :θτ => 0.0,
     #:mass => 12.95,
-    #:mass => [0.0182089],
-    :mass => [0.0182089,0.0387211,0.055809],
-    :aspect_ratio => 5/4,
-    :ρ => 1000,
+    :mass => 0.0182089,
+    #:mass => [0.0182089,0.0387211,0.055809],
+    :aspect_ratio => 5/2,
+    :ρ => 998,
     #:ρ => 1098.3,
     #:ρ => 1067.7,
     :τ => 0.0,
@@ -93,8 +93,8 @@ parameters = dict_list(parameters)
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/fallingfilms/3-D/Florineexperiments_firstorder"
-    filename = savename(p, "nc", accesses=[:mass])
+    out_dir = "data/fallingfilms/3-D/Florineexperiments_29"
+    filename = savename(p, "nc", accesses=[:hₛ_ratio])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename

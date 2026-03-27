@@ -4,7 +4,7 @@ using SparseArrays, StaticArrays, LinearAlgebra, UnPack, Reexport, FLoops
 using UnPack
 
 const nᵤ = 7
-const MODE = :simple # type of augumented formulations
+const MODE = :full # type of augumented formulations
 # const MODE = :simple
 # const MODE = nothing
 
@@ -72,7 +72,8 @@ function compute_inlet!(t, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, hₛ, h₀, 
         #ux[1,j] = ((((hₛ)^2)/3)+ls*(hₛ))*(1-0.0002*t)*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*2
 	    #ux[1,j] = ((((hₛ)^2)/3)+ls*(hₛ))*(0.11+(1-0.11)*exp(-20*t/tmax))*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*2
         h[1,j]= hₛ
-        ux[1,j] = mass*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*6
+        #ux[1,j] = mass*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*6/hₛ
+        ux[1,j] = mass/hₛ
         ϕx[1,j] = ux[1,j]/(3*ls+(hₛ))
     end
          #*0.549723 *0

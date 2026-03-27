@@ -39,6 +39,15 @@ function dict2ntuple(dict::Dict{Symbol,T}) where T
     NamedTuple{Tuple(keys(dict))}(values(dict))
 end
 
+#function clamptest(i, m, n)
+#	if i>n
+#		return i=n
+#	elseif i<m
+#		return i=m
+#	else
+#		return i
+#	end
+#end
 """
     @preallocate caches... = template
 
