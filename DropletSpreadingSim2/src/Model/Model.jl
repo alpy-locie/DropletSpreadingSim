@@ -66,16 +66,18 @@ end
 
 function compute_inlet!(t, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax, mass, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
     #ux[1,j] = ((((hₛ)^2)/3)+ls*(hₛ))*(1-0.0002*t)
-    for j in 1:n₂
+    #for j in 1:n₂
         #ux[1,j] = ((((h[1,j])^2)/3)+ls*(h[1,j]))*(1-0.0002*t)*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*4
         #ϕx[1,j] = ux[1,j]/(3*ls+(h[1,j]))
         #ux[1,j] = ((((hₛ)^2)/3)+ls*(hₛ))*(1-0.0002*t)*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*2
 	    #ux[1,j] = ((((hₛ)^2)/3)+ls*(hₛ))*(0.11+(1-0.11)*exp(-20*t/tmax))*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*2
-        h[1,j]= hₛ
+        #h[1,j]= hₛ
         #ux[1,j] = mass*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*6/hₛ
-        ux[1,j] = mass/hₛ
-        ϕx[1,j] = ux[1,j]/(3*ls+(hₛ))
-    end
+        #ux[1,j] = mass/h[1,j]
+        #ϕx[1,j] = ux[1,j]/(3*ls+(h[1,j]))
+        #ux[i,j] = mass/h[i,j]
+        #ϕx[i,j] = ux[i,j]/(3*ls+(h[i,j]))
+    #end
          #*0.549723 *0
     #for i in 1:n₁
     #for j in 1:n₂
@@ -84,7 +86,7 @@ function compute_inlet!(t, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, hₛ, h₀, 
     #end
     #end
     #h[1,j]=sqrt(3*ux[1,j])
-    #h[1,j]=hₛ*(1+0.05*sin(t*(h₀/u₀)*pi*2*f))
+    h[1,j]=hₛ*(1+0.05*sin(t*(h₀/u₀)*pi*2*f))
     return
 end
 
@@ -95,8 +97,8 @@ function compute_inlet!(t, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, hₛ, h₀, 
 end
 
 function compute_sidewalls!(t, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
-    h[i,n₂]=hₛ
-    h[i,1]=hₛ
+    # h[i,n₂]=hₛ
+    # h[i,1]=hₛ
     ux[i,1]=0
     ux[i,n₂]=0
     uy[i,1]=0
@@ -134,8 +136,8 @@ end
 function build_cache_cap(T, n₁, n₂) #Initializing variables
     x = T()
     @preallocate h, hux, huy, ux, uy, vx, vy, ϕx, ϕy = similar(x, (n₁, n₂))
-    @preallocate fxx, fxy, fyy, gv, fvx, fvy, convxx, convxy, convyx, convyy, gx, gy, Pid = similar(x, (n₁, n₂))
-    return @ntuple h hux huy ux uy vx vy ϕx ϕy fxx fxy fyy gv fvx fvy gx gy Pid convxx convxy convyx convyy
+    @preallocate fxx, fxy, fyy, gv, fvx, fvy, convxx, convxy, convyx, convyy, gx, gy, Pid, tanhy = similar(x, (n₁, n₂))
+    return @ntuple h hux huy ux uy vx vy ϕx ϕy fxx fxy fyy gv fvx fvy gx gy Pid tanhy convxx convxy convyx convyy
 end
 
 build_cache(T, n₁, n₂) = (cap=build_cache_cap(T, n₁, n₂), hyp=build_cache_hyp(T, n₁, n₂))

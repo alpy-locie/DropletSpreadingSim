@@ -91,7 +91,7 @@ will lead to (h[bc(i - 1), j] + h[bc(i + 1), j]) / Δx
 const bc_type= :inlet
 macro bc(var, expr)
     #bound_ij(i, j) = :(mod1($i, n₁)), :(mod1($j, n₂)) 
-    function bound_ij(i, j; bc_type=:inlet, inlet_val=nothing, outlet_val=nothing)
+    function bound_ij(i, j; bc_type=:periodic, inlet_val=nothing, outlet_val=nothing)
     if bc_type == :periodic
         return :(clamp($i, 1, n₁)), :(mod1($j, n₂))
     elseif bc_type == :inlet

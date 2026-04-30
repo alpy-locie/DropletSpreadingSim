@@ -52,7 +52,7 @@ end
 # %%
 parameters = Dict(
     :tmax => 1000,
-    :hₛ_ratio => [75,100,125,150],
+    :hₛ_ratio => [20,40,60,80],
     #:hₛ => 0.334112,
     #:hₛ => 1.27726,
     :ndrops => 1,
@@ -68,11 +68,11 @@ parameters = Dict(
     #:σ => 0.0484,
     #:σ => 0.067,
     :σ => 0.074,
-    :θₛ => 48,
+    :θₛ => -90,
     #:α => 6.4,
     :α => 90,
     :f => 0,
-    :dθₛ => 2.5,
+    :dθₛ => 0,
     :save_timestep => 10,
     :θτ => 0.0,
     #:mass => 12.95,
@@ -93,7 +93,7 @@ parameters = dict_list(parameters)
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/fallingfilms/3-D/Florineexperiments_29"
+    out_dir = "data/fallingfilms/3-D/Florineexperiments_29_disjoiningpressure"
     filename = savename(p, "nc", accesses=[:hₛ_ratio])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))

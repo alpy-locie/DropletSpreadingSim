@@ -148,7 +148,7 @@ function build_reprojection_callback(
         t=integrator.t
         compute_inlet!(t, h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax, mass; executor) 
         compute_v!(vx_new, vy_new, h, κ, Δx, Δy, n₁, n₂; executor)
-        compute_sidewalls!(t, h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax; executor)
+        #compute_sidewalls!(t, h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂, hₛ, h₀, u₀, f, ls, tmax; executor)
         if isnothing(thresh) || (
             (norm(vx - vx_new) / norm(vx) > thresh) ||
             (norm(vy - vy_new) / norm(vy) > thresh)
@@ -227,18 +227,18 @@ function init_model(x, y, h, p)
     @unpack κ, τx, τy, ls, hₛ, h₀, μ, ρ, g, f, ls, mass  = p
 
 #    uy = @. h * τy / 2 
-    #ux = ones(n₁, n₂)* ((((hₛ)^2)/3)+ls*(hₛ))#*0.549723 *0
-    ux = zeros(n₁, n₂)
-    ϕx = zeros(n₁, n₂)
+    ux = ones(n₁, n₂)* ((((hₛ)^2)/3)+ls*(hₛ))#*0.549723 *0
+    #ux = zeros(n₁, n₂)
+    ϕx = ux/(3*ls+(hₛ))
      #*0.549723 *0
-    for i in 1:n₁
-    for j in 1:n₂
+    #for i in 1:n₁
+    #for j in 1:n₂
 	#ux[i,j] = ((((h[i,j])^2)/3)+ls*(h[i,j]))*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*2
     #ux[i,j] = mass*(((j-1)/(n₂-1))-((j-1)/(n₂-1))^2)*6/hₛ
-    ux[i,j] = mass/hₛ
-    ϕx[i,j] = ux[i,j]/(3*ls+(h[i,j]))
-    end
-    end
+    #ux[i,j] = mass/h[i,j]
+    #ϕx[i,j] = ux[i,j]/(3*ls+(h[i,j]))
+    #end
+    #end
     uy = zeros(n₁, n₂)
     vx = zeros(n₁, n₂)
     vy = zeros(n₁, n₂)
@@ -339,13 +339,13 @@ function DropletSpreadingExperiment(
     τy = sin(θτ)
     # attention ! A cause de la peridocité, il ne faut pas le dernier point du domaine
     #x = range(-L / 2, L * (aspect_ratio - 1 / 2) - δ, step=δ)
-    x = range(0, L * (aspect_ratio ) - δ, step=δ)
+    x = range(0, L * (aspect_ratio ), step=δ)
     #sinx = [sin(2*pi*j/(L)) for i in 0:δ:( L * (aspect_ratio ) - δ)]
     #siny = range(sin(-L / 2), sin(L * (1 - 1 / 2) - δ), step=δ)
     #@show(sinx)
 
     if two_dim
-        y = range(-L / 2, L / 2 - δ, step=δ)
+        y = range(-L / 2, L / 2, step=δ)
     else
         y = [0.0]
     end
@@ -367,14 +367,14 @@ function DropletSpreadingExperiment(
     θₛ = 0.5 * (θₐ + θᵣ)
     xmin, xmax = extrema(x)
     ymin, ymax = extrema(y)
-    d_R = Normal(1.0, hdrop_std)
-    R = rand(d_R, ndrops)
-    voldrop = vdrop.(R, θₛ)
-    vol = sum(voldrop)
-    R = R * (abs(mass) / vol)^(1 / 3)
-    Rmoy = mean(R)
-    # drops must be deposited within the numerical domain
-    # withdraw mass if mass is negative (2*mass)
+    # d_R = Normal(1.0, hdrop_std)
+    # R = rand(d_R, ndrops)
+    # voldrop = vdrop.(R, θₛ)
+    # vol = sum(voldrop)
+    # R = R * (abs(mass) / vol)^(1 / 3)
+    # Rmoy = mean(R)
+    # # drops must be deposited within the numerical domain
+    # # withdraw mass if mass is negative (2*mass)
     if mass < 0
         hw = 2 * mass / (L^2 * aspect_ratio)
     else
@@ -383,7 +383,7 @@ function DropletSpreadingExperiment(
 
     if ndrops == 1
         @show(hi .+ hw)
-        h = ones(n₁,n₂)*(( hi))- (hi)*0.001*siny
+        h = ones(n₁,n₂)*((hi))#- (hi)*0.01*siny
            #@show((ρ * g *(h₀^2) * (volh^(2/3))/ σ))
     else
         d_posx = Uniform(xmin + Rmoy, xmax - Rmoy)
