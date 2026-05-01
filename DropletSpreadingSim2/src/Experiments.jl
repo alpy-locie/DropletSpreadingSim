@@ -219,7 +219,7 @@ function init_model(x, y, h, p)
     end
     gridinfo = (x=x, y=y, Δx=Δx, Δy=Δy, n₁=n₁, n₂=n₂)
 
-    @unpack κ, τx, τy, ls = p
+    @unpack κ, τx, τy, ls, α = p
 
   # @show(h^2 * (1000 *9.8) / (0.001*2))
 #    uy = @. h * τy / 2
@@ -253,6 +253,7 @@ function DropletSpreadingExperiment(
     σ,
     ρ,
     μ,
+    α,
     τ,
     θτ,
     L,
@@ -274,7 +275,7 @@ function DropletSpreadingExperiment(
     #g=9.8*sin(0.0872665)
     #g=9.8*sin(0.0698132)
     #g=9.8*sin(0.785398) # angle - 45
-    g=9.8*sin(0.0872665) # angle - 15
+    g=9.8*sin(α*pi/180) # angle - 15
 )
     if L < 2h₀
         error("Domain length < 2h₀")
@@ -326,7 +327,7 @@ function DropletSpreadingExperiment(
     n₁, n₂ = length.([x, y])
     Δx = Δy = δ
 
-    p = (Re=Re, κ=κ, ls=ls, β=β, τx=τx, τy=τy, hₛ=hₛ, θₐ=θₐ, θᵣ=θᵣ)
+    p = (Re=Re, κ=κ, ls=ls, α=α, β=β, τx=τx, τy=τy, hₛ=hₛ, θₐ=θₐ, θᵣ=θᵣ)
 
     if isempty(hi)
         hi = hₛ

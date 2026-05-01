@@ -90,7 +90,7 @@ end
 
 function skew_cap_kernel!(
     dU, h, ux, uy, vx, vy, ϕx, ϕy,
-    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
+    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α,
     Re, β, τx, τy, convxx, convxy, convyx, convyy, 
     Δx, Δy, n₁, n₂, i, j
 )
@@ -105,7 +105,7 @@ function skew_cap_kernel!(
     v = @SVector [vx[i, j], vy[i, j]]# Vector for W
     τ = @SVector [0.0, 0.0]            # Vector for τe
     dh= @SVector [(@dx(h)), (@dy(h))]# gradient of h
-    gvect=@SVector [h[i,j]*(1-cot(0.0872665)*(@dx(h))), 0.0]
+    gvect=@SVector [h[i,j]*(1-cot(α*pi/180)*(@dx(h))), 0.0]
     #gvect=@SVector [h[i,j], 0.0]
 
   convdiv= @SVector [ϕx[i, j]*(@dx(ux))+ϕy[i, j]*(@dy(ux)), ϕx[i, j]*(@dx(uy))+ϕy[i, j]*(@dy(uy))] 
@@ -141,7 +141,7 @@ end
 
 function skew_cap_kernel!(
     dU, h, ux, uy, vx, vy, ϕx, ϕy,
-    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
+    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α,
     Re, β, τx, τy, convxx, convxy, convyx, convyy, 
     Δx, Δy, n₁, n₂; executor=ThreadedEx(),
 )
@@ -149,7 +149,7 @@ function skew_cap_kernel!(
         i, j = Tuple(I)
         skew_cap_kernel!(
             dU, h, ux, uy, vx, vy, ϕx, ϕy,
-            gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
+            gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α,
             Re, β, τx, τy, convxx, convxy, convyx, convyy,
             Δx, Δy, n₁, n₂, i, j
         )
@@ -162,7 +162,7 @@ function update_cap!(dUvec, Uvec, p, t; gridinfo, caches, executor=:auto)
     @unpack h, hux, huy, ux, uy, vx, vy, ϕx, ϕy = cache_cap #storing temporary variables?
     @unpack fxx, fxy, fyy, gv, fvx, fvy, gx, gy, Pid, convxx, convxy, convyx, convyy = cache_cap
     @unpack Δx, Δy, n₁, n₂ = gridinfo # imports the grid size and its number
-    @unpack κ, Re, β, τx, τy, θₐ, θᵣ, hₛ, ls = p # imports the inputs of the problem
+    @unpack κ, Re, β, τx, τy, θₐ, θᵣ, hₛ, ls, α = p # imports the inputs of the problem
 
     if executor == :auto
         executor = Uvec isa CuArray ? CUDAEx() : ThreadedEx()
@@ -180,7 +180,7 @@ function update_cap!(dUvec, Uvec, p, t; gridinfo, caches, executor=:auto)
 
     skew_cap_kernel!(# Evaluates the non-conservative terms
         dUvec, h, ux, uy, vx, vy, ϕx, ϕy,
-        gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, 
+        gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α,
         Re, β, τx, τy, convxx, convxy, convyx, convyy, 
         Δx, Δy, n₁, n₂;
         executor

@@ -7,13 +7,13 @@ global_logger(TerminalLogger(stderr))
 
 # %%
 function do_simulate(p; filename)
-    @unpack h₀, ls, σ, ρ, μ, τ, θτ, L, hₛ, hₛ_ratio, θₛ, dθₛ, hₛ, aspect_ratio, tmax,
+    @unpack h₀, ls, σ, ρ, μ, α, τ, θτ, L, hₛ, hₛ_ratio, θₛ, dθₛ, hₛ, aspect_ratio, tmax,
     mass, ndrops, hdrop_std, two_dim, reproject = p
     θₐ = deg2rad(θₛ + dθₛ)
     θᵣ = deg2rad(θₛ - dθₛ)
 
     # %%
-    experiment = DropletSpreadingExperiment(; h₀, ls, σ, ρ, μ, τ, θτ, L, hₛ_ratio, hₛ, θₐ, θᵣ,
+    experiment = DropletSpreadingExperiment(; h₀, ls, σ, ρ, μ, α, τ, θτ, L, hₛ_ratio, hₛ, θₐ, θᵣ, 
         aspect_ratio, mass, ndrops, hdrop_std, two_dim)
 
     # %%
@@ -51,9 +51,9 @@ end
 #SSPRK432();
 # %%
 parameters = Dict(
-    :tmax => 60,
+    :tmax => 1000,
     :hₛ_ratio => 2.0,
-    :hₛ => [5e-2],
+    :hₛ => [3e-2],
     #:hₛ => 5e-2,
     :ndrops => 1,
     :hdrop_std => 0.2,
@@ -69,6 +69,7 @@ parameters = Dict(
     :dθₛ => 0,
     :save_timestep => 10,
     :θτ => 0.0,
+    :α => 90,
     #:mass => 12.95,
     :mass => 6,
     :aspect_ratio => 2,
@@ -85,7 +86,7 @@ parameters = dict_list(parameters)
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/outputs/3-D/hs_Ratio=2_ls_0.002_α=5_θₛ=48"
+    out_dir = "data/outputs/3-D/hs_Ratio=2_ls_0.002_α=90_θₛ=48"
     filename = savename(p, "nc", accesses=[:hₛ])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
