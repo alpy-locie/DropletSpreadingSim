@@ -51,9 +51,9 @@ end
 #SSPRK432();
 # %%
 parameters = Dict(
-    :tmax => 1000,
+    :tmax => 1200,
     :hₛ_ratio => 2.0,
-    :hₛ => [3e-2],
+    :hₛ => 2e-2,
     #:hₛ => 5e-2,
     :ndrops => 1,
     :hdrop_std => 0.2,
@@ -66,15 +66,15 @@ parameters = Dict(
     :σ => 0.020,
     :θₛ => 48,
     #:θₛ => [15,30,45,60,75],
-    :dθₛ => 0,
+    :dθₛ => 2.5,
     :save_timestep => 10,
     :θτ => 0.0,
-    :α => 90,
+    :α => 45,
     #:mass => 12.95,
     :mass => 6,
-    :aspect_ratio => 4,
+    :aspect_ratio => 2,
     #:ρ => 1000.0,
-    :ρ => 964,
+    :ρ => 936,
     :τ => 0.0,
     :L => 5,
     :two_dim => true,
@@ -86,8 +86,8 @@ parameters = dict_list(parameters)
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/outputs/3-D/hs_Ratio=2_ls_0.002_α=90_θₛ=48"
-    filename = savename(p, "nc", accesses=[:hₛ])
+    out_dir = "data/outputs/3-D/dropletdata/hs_Ratio=2_ls_0.002_hs=0.02_θₛ=48_α_45"
+    filename = savename(p, "nc", accesses=[:α])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename

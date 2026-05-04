@@ -315,9 +315,7 @@ function DropletSpreadingExperiment(
     # echelle de vitesse sur  τ donc norme de (τx, τy) = 1
     τx = cos(θτ)
     τy = sin(θτ)
-    # attention ! A cause de la peridocité, il ne faut pas le dernier point du domaine
     x = range(-L / 2, L * (aspect_ratio - 1 / 2) - δ, step=δ)
-
     if two_dim
         y = range(-L / 2, L / 2 - δ, step=δ)
     else
