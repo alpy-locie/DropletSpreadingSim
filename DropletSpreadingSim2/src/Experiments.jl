@@ -144,6 +144,7 @@ function build_reprojection_callback(
         @unpack κ = exp.p
         unpack_Uvec!(h, ux, uy, vx, vy, ϕx, ϕy, Uvec, n₁, n₂; executor)
         compute_v!(vx_new, vy_new, h, κ, Δx, Δy, n₁, n₂; executor)
+	    #compute_sidewalls!(h, ux, uy, vx_new, vy_new, ϕx, ϕy, n₁, n₂; executor)
         if isnothing(thresh) || (
             (norm(vx - vx_new) / norm(vx) > thresh) ||
             (norm(vy - vy_new) / norm(vy) > thresh)

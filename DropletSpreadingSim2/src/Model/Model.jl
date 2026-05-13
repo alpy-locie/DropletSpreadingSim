@@ -1,5 +1,5 @@
 module Model
-export update_cap!, update_hyp!, compute_v!, compute_ϕ!, build_cache, build_cache_cap, build_cache_hyp, MODE, nᵤ
+export update_cap!, update_hyp!, compute_v!, compute_ϕ!, compute_sidewalls!, build_cache, build_cache_cap, build_cache_hyp, MODE, nᵤ
 using SparseArrays, StaticArrays, LinearAlgebra, UnPack, Reexport, FLoops
 using UnPack
 
@@ -63,6 +63,23 @@ function compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls; executor=ThreadedEx()) #
         compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls, Tuple(I)...)
     end
 end
+
+function compute_sidewalls!(h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, i, j) # definition of ϕ= ((u ⊗ u) / 3h^2) - 1 / 12h^2 * ((u ⊗ u) - h^2 * (τe ⊗ τe) / 4)
+    uy[i,1]=0
+    uy[i,n₂]=0
+    ϕy[i,1]=0
+    ϕy[i,n₂]=0
+    vy[i,1]=0
+    vy[i,n₂]=0
+    return
+end
+
+function compute_sidewalls!(h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂; executor=ThreadedEx()) #Evaluating ϕ
+    @floop executor for I in CartesianIndices(h)
+        compute_sidewalls!(h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂, Tuple(I)...)
+    end
+end
+
 
 function build_cache_hyp(T, n₁, n₂)#initialising arrays
     x = T()

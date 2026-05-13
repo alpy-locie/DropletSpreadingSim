@@ -1,7 +1,7 @@
 # %%
 using DropletSpreadingSim2
 
-using DifferentialEquations, Sundials, Logging, DrWatson
+using DifferentialEquations, Sundials, Logging, DrWatson, LSODA
 using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger(stderr))
 
@@ -38,6 +38,8 @@ function do_simulate(p; filename)
         #AutoTsit5(Rosenbrock23());
         #Tsit5();
         SSPRK432();
+	#KenCarp4();
+	#Rodas5();
         callback=CallbackSet(callbacks...),
         progress=true,
         progress_steps=1,
@@ -51,29 +53,32 @@ end
 #SSPRK432();
 # %%
 parameters = Dict(
-    :tmax => 1200,
-    :hₛ_ratio => 2.0,
-    :hₛ => 2e-2,
+    :tmax => 1000,
+    :hₛ_ratio => 2,
+    :hₛ => 0.03,
     #:hₛ => 5e-2,
     :ndrops => 1,
     :hdrop_std => 0.2,
     :h₀ => 0.001,
+    #:ls => [2e-1,1e-1,5e-2,2e-2,1e-2],
     :ls => 0.002,
     #:ls => [2e-2,1e-2,5e-3,2e-3,1e-3,5e-4,2e-4],
     :μ => 0.01,
     #:μ => 0.01,
     #:σ => 0.075,
     :σ => 0.020,
+    #:θₛ => 48,
     :θₛ => 48,
     #:θₛ => [15,30,45,60,75],
-    :dθₛ => 2.5,
+    :dθₛ => [0,2.5,5],
     :save_timestep => 10,
     :θτ => 0.0,
-    :α => 45,
+    :α => 90,
     #:mass => 12.95,
     :mass => 6,
-    :aspect_ratio => 2,
+    :aspect_ratio => 7,
     #:ρ => 1000.0,
+    #:ρ => 936,
     :ρ => 936,
     :τ => 0.0,
     :L => 5,
@@ -86,8 +91,8 @@ parameters = dict_list(parameters)
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/outputs/3-D/dropletdata/hs_Ratio=2_ls_0.002_hs=0.02_θₛ=48_α_45"
-    filename = savename(p, "nc", accesses=[:α])
+    out_dir = "data/outputs/3-D/Contactanglehystersis_α_90_hs_0.03_ls_0.002_θₛ_48"
+    filename = savename(p, "nc", accesses=[:dθₛ])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename
