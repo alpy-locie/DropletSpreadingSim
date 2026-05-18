@@ -47,30 +47,27 @@ show(io::IO, exp::DropletSpreadingExperiment) =
 
 function unpack_fields_flat(U, exp::DropletSpreadingExperiment; raw=false) #asigning values for the variables?
     @unpack n₁, n₂ = exp.grid
-    h, hux, huy, hvx, hvy, hϕx, hϕy  = eachslice(reshape(U, 7, n₁, n₂); dims=1)
+    h, hux, huy, hϕx, hϕy  = eachslice(reshape(U, 5, n₁, n₂); dims=1)
     if raw
         return (
             h=h,
             ux=hux,
             uy=huy,
-            vx=hvx,
-            vy=hvy,
             ϕx=hϕx,
             ϕy=hϕy,
         )
     end
-    ux, uy, vx, vy, ϕx, ϕy =
-        [hux, huy, hvx, hvy, hϕx, hϕy] .|> ((var) -> var ./ h)
-    return (h=h, ux=ux, uy=uy, vx=vx, vy=vy, ϕx=ϕx, ϕy=ϕy)
+    ux, uy, ϕx, ϕy =
+        [hux, huy, hϕx, hϕy] .|> ((var) -> var ./ h)
+    return (h=h, ux=ux, uy=uy, ϕx=ϕx, ϕy=ϕy)
 end
 
 function unpack_fields_vect(U, exp::DropletSpreadingExperiment; raw=false)#Creating vectors
     @unpack n₁, n₂ = exp.grid
-    @unpack h, ux, uy, vx, vy, ϕx, ϕy = unpack_fields_flat(U, exp; raw)
+    @unpack h, ux, uy, ϕx, ϕy = unpack_fields_flat(U, exp; raw)
     u = [@SVector([ux[i, j], uy[i, j]]) for i = 1:n₁, j = 1:n₂]
-    v = [@SVector([vx[i, j], vy[i, j]]) for i = 1:n₁, j = 1:n₂]
     ϕ1= [@SVector([ϕx[i, j], ϕy[i, j]]) for i = 1:n₁, j = 1:n₂]
-    return (h=h, u=u, v=v, ϕ=ϕ, ϕ1=ϕ1)
+    return (h=h, u=u, ϕ1=ϕ1)
 end
 
 function unpack_fields(U, exp::DropletSpreadingExperiment; vect=false, raw=false)# returning the variables in non-vector form?
@@ -109,7 +106,7 @@ function build_save_callback(
         x_[:] = x |> collect
         y_[:] = y |> collect
 
-        for var in ["h", "ux", "uy", "vx", "vy", "ϕx", "ϕy"]
+        for var in ["h", "ux", "uy", "ϕx", "ϕy"]
             defVar(ds, var, Float64, ("t", "x", "y"))
         end
     end
@@ -227,15 +224,13 @@ function init_model(x, y, h, p)
     #ux = ones(n₁, n₂)* 1000 *9.8 / 0.01
     ux = zeros(n₁, n₂)
     uy = zeros(n₁, n₂)
-    vx = zeros(n₁, n₂)
-    vy = zeros(n₁, n₂)
     ϕx = zeros(n₁, n₂)
     ϕy = zeros(n₁, n₂)
 
-    compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
+    #compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
     compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls)
     U₀ = zeros(nᵤ * n₁ * n₂)
-    pack_Uvec!(U₀, h, ux, uy, vx, vy, ϕx, ϕy, n₁, n₂)
+    pack_Uvec!(U₀, h, ux, uy, ϕx, ϕy, n₁, n₂)
 
     return (
         U₀=U₀,

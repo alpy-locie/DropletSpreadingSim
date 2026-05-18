@@ -49,12 +49,12 @@ end
 function compute_caF_x!(c, d, a, F, U, i, j)
     c[i, j] = U[i, j, 2] / U[i, j, 1] #ux
    #  a[i, j] = √(3/5) *(max(U[i, j, 9] , 0)) # √(3/5)*max(hϕx,0)
-    a[i, j] = √(3/5) *(abs(U[i, j, 6] )) # √(3/5)*max(hϕx,0)
+    a[i, j] = √(3/5) *(abs(U[i, j, 4] )) # √(3/5)*max(hϕx,0)
     for k in 1:nᵤ
         F[i, j, k] = c[i, j] * U[i, j, k] #ux*h, ux*(h ux), ux*(h uy), ux*(h vx).. ux*(h ψ1y)
     end
-      F[i, j, 2] += U[i, j, 1] * U[i, j, 6]* U[i, j, 6]/5 # ux*(h ux) + h^3*ϕx/5
-      F[i, j, 3] += U[i, j, 1] * U[i, j, 6]* U[i, j, 7]/5# ux*(h uy) + h^3*ϕx/5
+      F[i, j, 2] += U[i, j, 1] * U[i, j, 4]* U[i, j, 4]/5 # ux*(h ux) + h^3*ϕx/5
+      F[i, j, 3] += U[i, j, 1] * U[i, j, 4]* U[i, j, 5]/5# ux*(h uy) + h^3*ϕx/5
     return
 end
 
@@ -62,12 +62,12 @@ end
 function compute_caF_y!(c, d, a, F, U, i, j)
     c[i, j] = U[i, j, 3] / U[i, j, 1] #uy
  #   a[i, j] = √(3/5) *(max(U[i, j, 10] , 0)) # (3/5)*max(hϕy,0
- a[i, j] = √(3/5) * abs(U[i, j, 7]) # (3/5)*max(hϕy,0
+ a[i, j] = √(3/5) * abs(U[i, j, 5]) # (3/5)*max(hϕy,0
     for k in 1:nᵤ
         F[i, j, k] = c[i, j] * U[i, j, k] #uy*h, uy*(h ux), uy*(h uy), uy*(h vx).. uy*(h ψ1y)
     end
-   F[i, j, 2] += U[i, j, 1] * U[i, j, 6]* U[i, j, 7]/5 # uy*(h ux) + h^3*ϕxϕy/5
-   F[i, j, 3] += U[i, j, 1] * U[i, j, 7]* U[i, j, 7]/5 # uy*(h uy) + h^3*ϕx*ϕy/5
+   F[i, j, 2] += U[i, j, 1] * U[i, j, 4]* U[i, j, 5]/5 # uy*(h ux) + h^3*ϕxϕy/5
+   F[i, j, 3] += U[i, j, 1] * U[i, j, 5]* U[i, j, 5]/5 # uy*(h uy) + h^3*ϕx*ϕy/5
     return
 end
 

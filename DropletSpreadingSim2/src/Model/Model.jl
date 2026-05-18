@@ -3,7 +3,7 @@ export update_cap!, update_hyp!, compute_v!, compute_ϕ!, compute_sidewalls!, bu
 using SparseArrays, StaticArrays, LinearAlgebra, UnPack, Reexport, FLoops
 using UnPack
 
-const nᵤ = 7
+const nᵤ = 5
 const MODE = :full # type of augumented formulations
 # const MODE = :simple
 # const MODE = nothing

@@ -82,16 +82,16 @@ parameters = Dict(
     :ρ => 936,
     :τ => 0.0,
     :L => 5,
-    :two_dim => true,
+    :two_dim => false,
     :cfl_safety_factor => 0.9,
-    :reproject => true,
+    :reproject => false,
 )
 parameters = dict_list(parameters)
 
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/outputs/3-D/Contactanglehystersis_α_90_hs_0.03_ls_0.002_θₛ_48"
+    out_dir = "data/outputs/2-D/Curvature_test"
     filename = savename(p, "nc", accesses=[:dθₛ])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
