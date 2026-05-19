@@ -11,13 +11,14 @@ function do_simulate(p; filename)
     mass, ndrops, hdrop_std, two_dim, reproject = p
     θₐ = deg2rad(θₛ + dθₛ)
     θᵣ = deg2rad(θₛ - dθₛ)
-
+    #tmax = 1000
+    @show(tmax)
     # %%
     experiment = DropletSpreadingExperiment(; h₀, ls, σ, ρ, μ, α, τ, θτ, L, hₛ_ratio, hₛ, θₐ, θᵣ, 
         aspect_ratio, mass, ndrops, hdrop_std, two_dim)
 
     # %%
-    prob = ODEProblem(experiment, (0.0, p[:tmax]))
+    prob = ODEProblem(experiment, (0.0, p[:tmax]*(sin(α*pi/180))))
     # cfl_limiter = build_cfl_limiter(experiment; safety_factor=p[:cfl_safety_factor])
     callbacks = Any[]
     if ~isnothing(filename)
@@ -70,19 +71,19 @@ parameters = Dict(
     #:θₛ => 48,
     :θₛ => 48,
     #:θₛ => [15,30,45,60,75],
-    :dθₛ => [0,2.5,5],
+    :dθₛ => 2.5,
     :save_timestep => 10,
     :θτ => 0.0,
-    :α => 90,
+    :α => [30,45,60],
     #:mass => 12.95,
     :mass => 6,
-    :aspect_ratio => 7,
+    :aspect_ratio => 2,
     #:ρ => 1000.0,
     #:ρ => 936,
     :ρ => 936,
     :τ => 0.0,
     :L => 5,
-    :two_dim => false,
+    :two_dim => true,
     :cfl_safety_factor => 0.9,
     :reproject => false,
 )
@@ -91,8 +92,8 @@ parameters = dict_list(parameters)
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/outputs/2-D/Curvature_test"
-    filename = savename(p, "nc", accesses=[:dθₛ])
+    out_dir = "data/outputs/3-D/fullgravity/hs_Ratio=2_ls_0.002_α=90_θₛ=48_hₛ=0.03"
+    filename = savename(p, "nc", accesses=[:α])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename

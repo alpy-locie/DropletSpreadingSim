@@ -94,7 +94,7 @@ end
 
 function skew_cap_kernel!(
     dU, h, ux, uy, ϕx, ϕy,
-    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α,
+    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α, hₛ,
     Re, β, τx, τy, convxx, convxy, convyx, convyy, 
     Δx, Δy, n₁, n₂, i, j
 )
@@ -141,7 +141,7 @@ end
 
 function skew_cap_kernel!(
     dU, h, ux, uy, ϕx, ϕy,
-    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α,
+    gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α, hₛ,
     Re, β, τx, τy, convxx, convxy, convyx, convyy, 
     Δx, Δy, n₁, n₂; executor=ThreadedEx(),
 )
@@ -149,7 +149,7 @@ function skew_cap_kernel!(
         i, j = Tuple(I)
         skew_cap_kernel!(
             dU, h, ux, uy, ϕx, ϕy,
-            gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α,
+            gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α, hₛ,
             Re, β, τx, τy, convxx, convxy, convyx, convyy,
             Δx, Δy, n₁, n₂, i, j
         )
@@ -180,7 +180,7 @@ function update_cap!(dUvec, Uvec, p, t; gridinfo, caches, executor=:auto)
 
     skew_cap_kernel!(# Evaluates the non-conservative terms
         dUvec, h, ux, uy, ϕx, ϕy,
-        gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α,
+        gx, gy, fxx, fxy, fyy, gv, fvx, fvy, Pid, ls, α, hₛ,
         Re, β, τx, τy, convxx, convxy, convyx, convyy, 
         Δx, Δy, n₁, n₂;
         executor
