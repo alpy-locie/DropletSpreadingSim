@@ -55,8 +55,8 @@ end
 # %%
 parameters = Dict(
     :tmax => 1000,
-    :hₛ_ratio => 2,
-    :hₛ => 0.03,
+    :hₛ_ratio => 4,
+    :hₛ => [0.05,0.07,1e-1],
     #:hₛ => 5e-2,
     :ndrops => 1,
     :hdrop_std => 0.2,
@@ -74,7 +74,7 @@ parameters = Dict(
     :dθₛ => 2.5,
     :save_timestep => 10,
     :θτ => 0.0,
-    :α => [30,45,60],
+    :α => 30,
     #:mass => 12.95,
     :mass => 6,
     :aspect_ratio => 2,
@@ -92,8 +92,9 @@ parameters = dict_list(parameters)
 # %%
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
-    out_dir = "data/outputs/3-D/fullgravity/hs_Ratio=2_ls_0.002_α=90_θₛ=48_hₛ=0.03"
-    filename = savename(p, "nc", accesses=[:α])
+    #params = (α=0,)
+    out_dir = "data/outputs/3-D/speedvsprecursorfilm/hs_Ratio=4_ls_0.002_θₛ=48_σ=30"
+    filename = savename(p, "nc", accesses=[:hₛ])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename
