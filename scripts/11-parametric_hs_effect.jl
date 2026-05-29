@@ -17,7 +17,7 @@ function do_simulate(p; filename)
     experiment = DropletSpreadingExperiment(; h₀, ls, σ, ρ, μ, α, τ, θτ, L, hₛ_ratio, hₛ, θₐ, θᵣ, 
         aspect_ratio, mass, ndrops, hdrop_std, two_dim)
 
-    # %%
+    # %%*(sin(α*pi/180))
     prob = ODEProblem(experiment, (0.0, p[:tmax]*(sin(α*pi/180))))
     # cfl_limiter = build_cfl_limiter(experiment; safety_factor=p[:cfl_safety_factor])
     callbacks = Any[]
@@ -74,7 +74,7 @@ parameters = Dict(
     :dθₛ => 2.5,
     :save_timestep => 10,
     :θτ => 0.0,
-    :α => 30,
+    :α => [52.5],
     #:mass => 12.95,
     :mass => 6,
     :aspect_ratio => 2,
@@ -93,13 +93,13 @@ parameters = dict_list(parameters)
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
     #params = (α=0,)
-    out_dir = "data/outputs/3-D/speedvsprecursorfilm/hs_Ratio=4_ls_0.002_θₛ=48_σ=30"
-    filename = savename(p, "nc", accesses=[:hₛ])
+    out_dir = "data/outputs/3-D/speedvsprecursorfilm/hs_Ratio=4_ls_0.002_θₛ=48"
+    filename = savename(p, "nc", accesses=[:hₛ, :α])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename
         continue
-    end
+    end 
     # remove filename if it exists
     if ~isnothing(filename) && isfile(filename)
         rm(filename)
