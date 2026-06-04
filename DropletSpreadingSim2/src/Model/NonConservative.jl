@@ -66,7 +66,6 @@ function compute_skew_cap_coeffs!(
     dej = (hₛ / h[i, j])^4 - (hₛ / h[i, j])^3# for n=4,m=3
     ε = 1.e-3
     θₛ = 0.5 * (θₐ + θᵣ) + 0.5 * (θᵣ - θₐ) * tanh((@div(hux, huy)) / ε) #Calculation of angle
-
     fvx[i, j] = fv[1]
     fvy[i, j] = fv[2]
     Pid[i, j] = (6 / hₛ) * κ * (1 - cos(θₛ)) * dej# for n=4,m=3
@@ -111,6 +110,7 @@ function skew_cap_kernel!(
     #convxx[i,j]=(h[i,j] - 1)/0.001((1+tanh.(convxx[i,j]))/2)*
     gvect=@SVector [(h[i,j])*(1-cot(α*pi/180)*(@dx(h))), 0.0]
     #gvect=@SVector [0.0, 0.0]
+    #gvect=@SVector [(h[i,j])*(-cot(α*pi/180)*(@dx(h))), 0.0]
     #gvect=@SVector [h[i,j], 0.0]((1+tanh((h[i,j] - 0.05)/0.001))/2)*
 
   convdiv= @SVector [ϕx[i, j]*(@dx(ux))+ϕy[i, j]*(@dy(ux)), ϕx[i, j]*(@dx(uy))+ϕy[i, j]*(@dy(uy))] 

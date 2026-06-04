@@ -1,7 +1,7 @@
 # %%
 using DropletSpreadingSim2
 
-using DifferentialEquations, Sundials, Logging, DrWatson, LSODA
+using DifferentialEquations, Sundials, Logging, DrWatson
 using TerminalLoggers: TerminalLogger
 global_logger(TerminalLogger(stderr))
 
@@ -46,7 +46,7 @@ function do_simulate(p; filename)
         progress_steps=1,
         save_everystep=false,
         saveat=get(p, :keep_timestep, []),
-        dt=1e-3,
+        dt=1e-4,
     )
 
     return sol, experiment
@@ -54,9 +54,9 @@ end
 #SSPRK432();
 # %%
 parameters = Dict(
-    :tmax => 1000,
+    :tmax => 200,
     :hₛ_ratio => 4,
-    :hₛ => [0.05,0.07,1e-1],
+    :hₛ => [0.1],
     #:hₛ => 5e-2,
     :ndrops => 1,
     :hdrop_std => 0.2,
@@ -64,23 +64,24 @@ parameters = Dict(
     #:ls => [2e-1,1e-1,5e-2,2e-2,1e-2],
     :ls => 0.002,
     #:ls => [2e-2,1e-2,5e-3,2e-3,1e-3,5e-4,2e-4],
-    :μ => 0.01,
+    :μ => 0.1,
     #:μ => 0.01,
     #:σ => 0.075,
     :σ => 0.020,
     #:θₛ => 48,
-    :θₛ => 48,
+    :θₛ => 47.8,
     #:θₛ => [15,30,45,60,75],
-    :dθₛ => 2.5,
-    :save_timestep => 10,
+    #:dθₛ => [0,10],
+    :dθₛ => 5.1,
+    :save_timestep => 1,
     :θτ => 0.0,
-    :α => [52.5],
+    :α => [10],
     #:mass => 12.95,
     :mass => 6,
     :aspect_ratio => 2,
     #:ρ => 1000.0,
     #:ρ => 936,
-    :ρ => 936,
+    :ρ => 964,
     :τ => 0.0,
     :L => 5,
     :two_dim => true,
@@ -93,8 +94,8 @@ parameters = dict_list(parameters)
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
     #params = (α=0,)
-    out_dir = "data/outputs/3-D/speedvsprecursorfilm/hs_Ratio=4_ls_0.002_θₛ=48"
-    filename = savename(p, "nc", accesses=[:hₛ, :α])
+    out_dir = "data/outputs/3-D/convergencetest_highviscosity_1"
+    filename = savename(p, "nc", accesses=[:hₛ, :α, :μ])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename

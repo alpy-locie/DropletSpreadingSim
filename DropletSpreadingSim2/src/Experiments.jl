@@ -163,11 +163,12 @@ function build_cfl_limiter(exp::DropletSpreadingExperiment; kwargs...)
         dtmax = 0.0
         @floop ThreadedEx() for I in CartesianIndices((n₁, n₂))
             i, j = Tuple(I)
-            visc_vel = U[i, j, 2] / U[i, j, 1] + √(3U[i, j, 1]) * √(max(U[i, j, 6], 0))
+            visc_vel = U[i, j, 2] / U[i, j, 1] + √(3/5) * abs(U[i, j, 4])
             dt = Δx / visc_vel
             @reduce() do (dtmax = 0; dt)
                 if isless(dtmax, dt)
                     dtmax = dt
+                    @show(dtmax)
                 end
             end
         end
@@ -227,8 +228,18 @@ function init_model(x, y, h, p)
     ϕx = zeros(n₁, n₂)
     ϕy = zeros(n₁, n₂)
 
+    #in_dir = "data/outputs/3-D/speedvsprecursorfilm/hs_Ratio=4_ls_0.002_θₛ=48/hₛ=0.05_α=30_μ=0.1.nc"
+    #ds1 = NCDataset(in_dir)
+    #iter=ds1["t"][end]
+    #@show(iter)
+    #h = ds1["h"][end,:,:]
+    #ux = ds1["ux"][end,:,:]
+    #uy = ds1["uy"][end,:,:]
+    #ϕx = ds1["ϕx"][end,:,:]
+    #ϕy = ds1["ϕy"][end,:,:]
+
     #compute_v!(vx, vy, h, κ, Δx, Δy, n₁, n₂)
-    compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls)
+    #compute_ϕ!(h, ux, uy, ϕx, ϕy, τx, τy, ls)
     U₀ = zeros(nᵤ * n₁ * n₂)
     pack_Uvec!(U₀, h, ux, uy, ϕx, ϕy, n₁, n₂)
 
@@ -253,8 +264,8 @@ function DropletSpreadingExperiment(
     τ,
     θτ,
     L,
-    θₐ=50.5,
-    θᵣ=45.5,
+    θₐ=nothing,
+    θᵣ=nothing,
     N=nothing,
     hₛ_ratio=nothing,
     hₛ=nothing,
@@ -307,7 +318,7 @@ function DropletSpreadingExperiment(
 @show(((L/δ)^2*(1*aspect_ratio)))
 @show((μ*u₀/ σ))
 @show((N))
-@show((δ))
+@show(κ)
     # echelle de vitesse sur  τ donc norme de (τx, τy) = 1
     τx = cos(θτ)
     τy = sin(θτ)
