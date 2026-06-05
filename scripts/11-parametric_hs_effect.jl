@@ -94,7 +94,7 @@ parameters = dict_list(parameters)
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
     #params = (α=0,)
-    out_dir = "data/outputs/3-D/convergencetest_highviscosity_1"
+    out_dir = "data/outputs/3-D/convergencetest_highviscosity_2"
     filename = savename(p, "nc", accesses=[:hₛ, :α, :μ])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
