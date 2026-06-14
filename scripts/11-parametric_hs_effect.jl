@@ -36,17 +36,20 @@ function do_simulate(p; filename)
     @info "launch sim" p
     @time sol = solve(
         prob,
+	#Rosenbrock23(autodiff=false);
         #AutoTsit5(Rosenbrock23());
         #Tsit5();
+        #Euler();
         SSPRK432();
+	#RadauIIA3();
 	#KenCarp4();
-	#Rodas5();
+	#Rodas5P(autodiff=false);
         callback=CallbackSet(callbacks...),
         progress=true,
         progress_steps=1,
         save_everystep=false,
         saveat=get(p, :keep_timestep, []),
-        dt=1e-4,
+        dt=1e-3,
     )
 
     return sol, experiment
@@ -54,9 +57,9 @@ end
 #SSPRK432();
 # %%
 parameters = Dict(
-    :tmax => 200,
+    :tmax => 1000,
     :hₛ_ratio => 4,
-    :hₛ => [0.1],
+    :hₛ => [0.12,0.06,0.03],
     #:hₛ => 5e-2,
     :ndrops => 1,
     :hdrop_std => 0.2,
@@ -64,26 +67,27 @@ parameters = Dict(
     #:ls => [2e-1,1e-1,5e-2,2e-2,1e-2],
     :ls => 0.002,
     #:ls => [2e-2,1e-2,5e-3,2e-3,1e-3,5e-4,2e-4],
-    :μ => 0.1,
+    :μ => 0.001,
     #:μ => 0.01,
     #:σ => 0.075,
-    :σ => 0.020,
-    #:θₛ => 48,
-    :θₛ => 47.8,
+    :σ => 0.072,
+    :θₛ => 11,
+    #:θₛ => 47.8,
+    #:θₛ => 52.45,
     #:θₛ => [15,30,45,60,75],
     #:dθₛ => [0,10],
-    :dθₛ => 5.1,
-    :save_timestep => 1,
+    :dθₛ => 0,
+    :save_timestep => 5,
     :θτ => 0.0,
-    :α => [10],
+    :α => [30,45,60],
     #:mass => 12.95,
-    :mass => 6,
-    :aspect_ratio => 2,
+    :mass => 27.17,
+    :aspect_ratio => 15,
     #:ρ => 1000.0,
-    #:ρ => 936,
-    :ρ => 964,
+    :ρ => 998,
+    #:ρ => 964,
     :τ => 0.0,
-    :L => 5,
+    :L => 9,
     :two_dim => true,
     :cfl_safety_factor => 0.9,
     :reproject => false,
@@ -94,8 +98,8 @@ parameters = dict_list(parameters)
 for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
     #params = (α=0,)
-    out_dir = "data/outputs/3-D/convergencetest_highviscosity_2"
-    filename = savename(p, "nc", accesses=[:hₛ, :α, :μ])
+    out_dir = "data/outputs/3-D/water"
+    filename = savename(p, "nc", accesses=[:hₛ, :μ])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename
