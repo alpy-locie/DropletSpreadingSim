@@ -338,7 +338,7 @@ function DropletSpreadingExperiment(
         hi = hₛ
     end
     # random distribution of drops with a total mass equal to mass
-    θₛ = θₐ#0.5 * (θₐ + θᵣ)
+    θₛ = 0.5 * (θₐ + θᵣ)
     xmin, xmax = extrema(x)
     ymin, ymax = extrema(y)
     d_R = Normal(1.0, hdrop_std)

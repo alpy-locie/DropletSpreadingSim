@@ -110,8 +110,8 @@ function skew_cap_kernel!(
     τ = @SVector [0.0, 0.0]            # Vector for τe
     dh= @SVector [(@dx(h)), (@dy(h))]# gradient of h
     #convxx[i,j]=(h[i,j] - 1)/0.001((1+tanh.(convxx[i,j]))/2)*
-    #gvect=@SVector [(h[i,j])*(1-cot(α*pi/180)*(@dx(h))), 0.0]
-    gvect=@SVector [0.0, 0.0]
+    gvect=@SVector [(h[i,j])*(1-cot(α*pi/180)*(@dx(h))), 0.0]
+    #gvect=@SVector [0.0, 0.0]
     #gvect=@SVector [(h[i,j])*(-cot(α*pi/180)*(@dx(h))), 0.0]
     #gvect=@SVector [h[i,j], 0.0]((1+tanh((h[i,j] - 0.05)/0.001))/2)*
 
