@@ -57,9 +57,9 @@ end
 #SSPRK432();
 # %%
 parameters = Dict(
-    :tmax => 1000,
+    :tmax => 3000,
     :hₛ_ratio => 4,
-    :hₛ => [0.12,0.06,0.03],
+    :hₛ => [0.06],
     #:hₛ => 5e-2,
     :ndrops => 1,
     :hdrop_std => 0.2,
@@ -82,7 +82,7 @@ parameters = Dict(
     :α => [30,45,60],
     #:mass => 12.95,
     :mass => 27.17,
-    :aspect_ratio => 2,
+    :aspect_ratio => 6,
     #:ρ => 1000.0,
     :ρ => 998,
     #:ρ => 964,
@@ -99,7 +99,7 @@ for p ∈ parameters
     #params = (hₛ="0.05", hₛ_ratio="4")
     #params = (α=0,)
     out_dir = "data/outputs/3-D/water"
-    filename = savename(p, "nc", accesses=[:hₛ, :μ])
+    filename = savename(p, "nc", accesses=[:hₛ, :μ, :α])
     #filename = savename(params, "nc")
     if ~isnothing(filename) && isfile(joinpath(out_dir, "$(basename(filename)).done"))
         @info "skipping" filename
